@@ -1,1 +1,206 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "LinuxBuild",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-g",
+                "main.cpp",
+                "rsa_encryption.cpp",
+                "database.cpp",
+                "-o",
+                "RSA_Client",
+                "-I/usr/local/lib/wx/include/gtk2-unicode-static-3.0",
+                "-I/usr/local/include/wx-3.0",
+                "-I/usr/include/mysql",
+                "-I/usr/include",
+                "-I/usr/include/x86_64-linux-gnu",
+                "/usr/local/lib/libquickmail.a",
+                "-D_FILE_OFFSET_BITS=64",
+                "-D__WXGTK__",
+                "-DLINUX",
+                "-pthread",
+                "-L/usr/local/lib",
+                "-pthread",
+                "/usr/local/lib/libwx_gtk2u_richtext-3.0.a",
+                "/usr/local/lib/libwx_gtk2u_xrc-3.0.a",
+                "/usr/local/lib/libwx_gtk2u_qa-3.0.a",
+                "/usr/local/lib/libwx_baseu_net-3.0.a",
+                "/usr/local/lib/libwx_gtk2u_html-3.0.a",
+                "/usr/local/lib/libwx_gtk2u_adv-3.0.a",
+                "/usr/local/lib/libwx_gtk2u_core-3.0.a",
+                "/usr/local/lib/libwx_baseu_xml-3.0.a",
+                "/usr/local/lib/libwx_baseu-3.0.a",
+                "-lgthread-2.0",
+                "-pthread",
+                "-lX11",
+                "-lXxf86vm",
+                "-lSM",
+                "-lgtk-x11-2.0",
+                "-lgdk-x11-2.0",
+                "-lpangocairo-1.0",
+                "-latk-1.0",
+                "-lcairo",
+                "-lgdk_pixbuf-2.0",
+                "-lgio-2.0",
+                "-lpangoft2-1.0",
+                "-lpango-1.0",
+                "-lgobject-2.0",
+                "-lglib-2.0",
+                "-lharfbuzz",
+                "-lfontconfig",
+                "-lfreetype",
+                "-lpng",
+                "-ljpeg",
+                "-ltiff",
+                "-lexpat",
+                "-lwxregexu-3.0",
+                "-lz",
+                "-ldl",
+                "-lresolv",
+                "-lm",
+                "-lcurl",
+                "-static-libstdc++",
+                "-static-libgcc",
+                "/usr/lib/x86_64-linux-gnu/libgmp.a",
+                "/usr/lib/x86_64-linux-gnu/libgmpxx.a",
+                "-L/usr/lib",
+                "-std=c++11",
+                "-lpthread",
+                "-ldl",
+                "-lrt",
+                "-lmysqlclient"
 
+
+
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Vom Debugger generierte Aufgabe."
+        },
+
+        {
+            "type": "cppbuild",
+            "label": "WindowsBuild",
+            "command": "/usr/bin/x86_64-w64-mingw32-g++",
+            "args": [
+                "main.cpp",
+                "rsa_encryption.cpp",
+                "database.cpp",
+                "-o",
+                "RSA_Client.exe",
+                "-I/usr/x86_64-w64-mingw32/lib/wx/include/x86_64-w64-mingw32-msw-unicode-static-3.0",
+                "-I/usr/x86_64-w64-mingw32/include/wx-3.0",
+                "-I/usr/x86_64-w64-mingw32/include",
+                "-I/usr/x86_64-w64-mingw32/include/mysql",
+                "-L/usr/x86_64-w64-mingw32/lib",
+                "-DUNICODE",
+                "-D_FILE_OFFSET_BITS=64",
+                "-D__WXMSW__",
+                "-DWINDOWS",
+                "-Wl,--subsystem,windows",
+                "-mwindows",
+                "/usr/x86_64-w64-mingw32/lib/libwx_mswu_richtext-3.0-x86_64-w64-mingw32.a",
+                "/usr/x86_64-w64-mingw32/lib/libwx_mswu_xrc-3.0-x86_64-w64-mingw32.a",
+                "/usr/x86_64-w64-mingw32/lib/libwx_mswu_webview-3.0-x86_64-w64-mingw32.a",
+                "/usr/x86_64-w64-mingw32/lib/libwx_mswu_qa-3.0-x86_64-w64-mingw32.a",
+                "/usr/x86_64-w64-mingw32/lib/libwx_baseu_net-3.0-x86_64-w64-mingw32.a",
+                "/usr/x86_64-w64-mingw32/lib/libwx_mswu_html-3.0-x86_64-w64-mingw32.a",
+                "/usr/x86_64-w64-mingw32/lib/libwx_mswu_adv-3.0-x86_64-w64-mingw32.a",
+                "/usr/x86_64-w64-mingw32/lib/libwx_mswu_core-3.0-x86_64-w64-mingw32.a",
+                "/usr/x86_64-w64-mingw32/lib/libwx_baseu_xml-3.0-x86_64-w64-mingw32.a",
+                "/usr/x86_64-w64-mingw32/lib/libwx_baseu-3.0-x86_64-w64-mingw32.a",
+                "-lwxregexu-3.0-x86_64-w64-mingw32",
+                "-lwxexpat-3.0-x86_64-w64-mingw32",
+                "-lwxtiff-3.0-x86_64-w64-mingw32",
+                "-lwxjpeg-3.0-x86_64-w64-mingw32",
+                "-lwxpng-3.0-x86_64-w64-mingw32",
+                "-lwxzlib-3.0-x86_64-w64-mingw32",
+                "-lrpcrt4",
+                "-loleaut32",
+                "-lole32",
+                "-luuid",
+                "-lwinspool",
+                "-lwinmm",
+                "-lshell32",
+                "-lcomctl32",
+                "-lcomdlg32",
+                "-ladvapi32",
+                "-lwsock32",
+                "-lgdi32",
+                "/usr/x86_64-w64-mingw32/lib/libquickmail.dll.a",
+                "-lcurl",
+                "-lcrypt32",
+                "-lws2_32",
+                "-ldnsapi",
+                "/usr/x86_64-w64-mingw32/lib/libgmp.a",
+                "/usr/x86_64-w64-mingw32/lib/libgmpxx.a",
+                "-lws2_32",
+                "/usr/x86_64-w64-mingw32/lib/liblibmysql.dll.a",
+                "-static",
+                "-lseh",
+                "-lmingwex",
+                "-lz",
+                "-std=c++11",
+                "-static",
+                "-lpthread",
+                "-static-libstdc++",
+                "-static-libgcc"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Vom Debugger generierte Aufgabe."
+        },
+        {
+            "type": "cppbuild",
+            "label": "UploaderBuild",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-g",
+                "update_upload.cpp",
+                "-o",
+                "Update_Upload",
+                "-I/usr/include/mysql",
+                "-I/usr/include",
+                "-static-libstdc++",
+                "-static-libgcc",
+                "-L/usr/lib",
+                "-std=c++17",
+                "-lpthread",
+                "-lmysqlclient"
+
+
+
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Vom Debugger generierte Aufgabe."
+        }
+    ],
+    "version": "2.0.0"
+}
