@@ -186,6 +186,10 @@ std::string Mail_Database::getSender(RSA_Encryptor* rsa, int ID){
     return getUsername(rsa, mail_captions.at(ID).From);
 }
 
+std::string Mail_Database::getReceiver(RSA_Encryptor* rsa, int ID){
+    return getUsername(rsa, sent_captions.at(ID).To);
+}
+
 void Mail_Database::init() {
     connected = false;
     mpz_init_set_str(pubNameKey.e, namekey_e.c_str(), 16);
@@ -292,7 +296,7 @@ std::vector<Mail_Caption> Mail_Database::receiveCaptions(RSA_Encryptor* rsa){
 
 std::vector<Mail_Caption> Mail_Database::receiveSentCaptions(RSA_Encryptor* rsa){
     std::vector<Mail_Caption> result;
-    if (mysql_query(mysql, std::string("SELECT `ID`, `From`, `SenderCaption`, `Read`, `SenderDate`, `SenderReceiveDate` FROM `Messages` WHERE `From`=" + std::to_string(account_id)).c_str())) {
+    if (mysql_query(mysql, std::string("SELECT `ID`, `From`, `SenderCaption`, `Read`, `SenderDate`, `SenderReceiveDate`, `To` FROM `Messages` WHERE `From`=" + std::to_string(account_id)).c_str())) {
         std::cout << mysql_error(mysql) << std::endl;
     }
     res = mysql_use_result(mysql);
@@ -305,6 +309,7 @@ std::vector<Mail_Caption> Mail_Database::receiveSentCaptions(RSA_Encryptor* rsa)
         tmp.Read = atoi(row[3]);
         tmp.date = rsa->decryptString(row[4], rsa->getPubKey(), rsa->getPrivKey());
         tmp.receiveDate = rsa->decryptString(row[5], rsa->getPubKey(), rsa->getPrivKey());
+        tmp.To = atoi(row[6]);
         result.push_back(tmp);
     }
 
@@ -657,7 +662,7 @@ void Mail_Database::exportData(std::string filename){
     MYSQL_ROW row;
     while ((row = mysql_fetch_row(res)) != NULL){
         of << "ID" << std::endl << row[0] << std::endl << "Name" << std::endl << row[1] << std::endl << "E" << std::endl << row[2] << std::endl;
-        of << "N" << std::endl << row[3] << std::endl << "Password" << std::endl << row[4] << std::endl;
+        of << "N" << std::endl << row[3] << std::endl << "Password" << std::endl << row[4] << std::endl<< "Email" << std::endl << row[5] << std::endl;
     }
 
     // Release memories
@@ -703,7 +708,7 @@ bool Mail_Database::hasEmail(){
     }
 }
 
-int Mail_Database::sendVerifcationEmail(RSA_Encryptor* rsa){
+int Mail_Database::sendPasswordResetEmail(RSA_Encryptor* rsa){
     int randomCode;
     randomCode = rand() % 9999999 + 1000000;
     //Get Email Adress
@@ -733,4 +738,24 @@ int Mail_Database::sendVerifcationEmail(RSA_Encryptor* rsa){
     quickmail_destroy(mailobj);
 
     return randomCode;
+}
+
+int Mail_Database::sendVerificationEmail(RSA_Encryptor* rsa, std::string emailAdress){
+    int randomCode;
+    randomCode = rand() % 9999999 + 1000000;
+    //Send Email
+    quickmail_initialize();
+    quickmail mailobj = quickmail_create(verify_adress.c_str(), "RSA Mail - Email Verifikation");
+	
+    quickmail_set_body(mailobj, std::string("Hallo " + getUsername() + ", \n\nhier ist der Code zum Verifizieren deiner Email-Adresse: " + std::to_string(randomCode) + ".\n\nFalls Sie sich nicht registriert haben, können Sie diese Email ignorieren.\n\n\nRSA Mail Verifikation").c_str());
+	quickmail_add_to(mailobj, emailAdress.c_str());
+	const char *errmsg = quickmail_send_secure(mailobj, "smtp.gmail.com", 465, verify_adress.c_str(), verify_password.c_str());
+    if (errmsg != NULL) {
+       std::cout << "Fehler beim Sender der Email: " << errmsg << "\r\n";
+    }
+
+    quickmail_destroy(mailobj);
+
+    return randomCode;
+    
 }

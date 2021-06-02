@@ -13,11 +13,12 @@
 #include <quickmail.h>
 
 
-#define CLIENT_VERSION 10
+#define CLIENT_VERSION 12
 
 struct Mail_Caption{
     int ID;
     int From;
+    int To;
     bool Read;
     std::wstring date;
     std::wstring receiveDate;
@@ -64,6 +65,7 @@ class Mail_Database {
         std::string getUsername();
         std::string getUsername(RSA_Encryptor* rsa, int ID);
         std::string getSender(RSA_Encryptor* rsa, int ID);
+        std::string getReceiver(RSA_Encryptor* rsa, int ID);
         std::wstring getCaption(int ID);
         std::vector<Mail_Caption> getMailCaptions();
         std::vector<Mail_Caption> getSentCaptions();
@@ -83,6 +85,7 @@ class Mail_Database {
         void close();
         void exportData(std::string filename);
         bool hasEmail();
-        int sendVerifcationEmail(RSA_Encryptor* rsa);
+        int sendPasswordResetEmail(RSA_Encryptor* rsa);
+        int sendVerificationEmail(RSA_Encryptor* rsa, std::string emailAdress);
 };
 

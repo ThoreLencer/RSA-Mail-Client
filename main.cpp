@@ -16,6 +16,8 @@
 #include <wx/progdlg.h>  
 #include <wx/thread.h>
 #include <wx/dynarray.h>
+#include <wx/htmllbox.h>
+#include <wx/settings.h>
 
 //Library 1: Installing gmp on Linux mingw cross compile for windows 64bit:
 //download gmp library
@@ -31,7 +33,6 @@
 
 //TODO
 //Kontaktbuch
-//Max Name length
 //Rechtsklick Kontextmenü: Löschen, Antworten, Weiterleiten
 
 enum
@@ -74,17 +75,9 @@ class MyApp : public wxApp {
 public:
     virtual bool OnInit();
 
-    // critical section protects access to all of the fields below
     wxCriticalSection m_critsect;
-
-    // all the threads currently alive - as soon as the thread terminates, it's
-    // removed from the array
     wxArrayThread m_threads;
-
-    // semaphore used to wait for the threads to exit, see MyFrame::OnQuit()
     wxSemaphore m_semAllDone;
-
-    // indicates that we're shutting down and all threads should exit
     bool m_shuttingDown;
 };
 
@@ -93,7 +86,7 @@ public:
     MyFrame();
     ~MyFrame();
     wxTimer* mailTimer;
-    wxListBox* inboxListBox;
+    wxSimpleHtmlListBox* inboxListBox;
     wxRichTextCtrl* mailText;
     wxStaticText* senderText;
     wxStaticText* accountText;
@@ -119,6 +112,7 @@ private:
     void OnDeleteMail(wxCommandEvent& event);
     void OnDeleteAccount(wxCommandEvent& event);
     void OnGetData(wxCommandEvent& event);
+    void UpdateInboxListBox();
 
     UpdateThread *CreateUpdateThread();
     wxDECLARE_EVENT_TABLE();
@@ -134,18 +128,18 @@ class WaitThread
   : public wxThread
 {
 public:
-  WaitThread(MyFrame* frame){
-      this->m_frame = frame;
+  WaitThread(wxEvtHandler* frame){
+      this->evtHandler = frame;
   }
   ~WaitThread();
 private:
-  MyFrame* m_frame;
+  wxEvtHandler* evtHandler;
 protected:
   virtual ExitCode Entry()
   {
     while(!TestDestroy()) {
         wxThreadEvent event(wxEVT_THREAD, PULSE_PROGRESS);
-        wxQueueEvent(m_frame, event.Clone());
+        wxQueueEvent(evtHandler, event.Clone());
         Sleep(150);
     }
     return static_cast<ExitCode>(NULL);
@@ -155,29 +149,29 @@ protected:
 class UpdateThread : public wxThread
 {
 public:
-    UpdateThread(MyFrame *frame){
-        this->m_frame = frame;
+    UpdateThread(wxEvtHandler *frame){
+        this->evtHandler = frame;
     }
 
     virtual ExitCode Entry();
     ~UpdateThread();
 
 public:
-    MyFrame *m_frame;
+    wxEvtHandler *evtHandler;
 };
 
 class RegisterThread : public wxThread
 {
 public:
-    RegisterThread(MyFrame *frame){
-        this->m_frame = frame;
+    RegisterThread(wxEvtHandler *frame){
+        this->evtHandler = frame;
     }
 
     virtual ExitCode Entry();
     ~RegisterThread();
 
 public:
-    MyFrame *m_frame;
+    wxEvtHandler *evtHandler;
 };
 
 class LoginFrame : public wxFrame {
@@ -242,7 +236,7 @@ wxThread::ExitCode UpdateThread::Entry(){
         #endif
 
         wxThreadEvent event(wxEVT_THREAD, UPDATE_THREAD_FINISH);
-        wxQueueEvent(m_frame, event.Clone());
+        wxQueueEvent(evtHandler, event.Clone());
 
         return static_cast<wxThread::ExitCode>(NULL); 
     }
@@ -271,7 +265,7 @@ wxThread::ExitCode RegisterThread::Entry(){
     rsa.generateKeyPair(NULL);
         
     wxThreadEvent event(wxEVT_THREAD, REGISTER_THREAD_FINISH);
-    wxQueueEvent(m_frame, event.Clone());
+    wxQueueEvent(evtHandler, event.Clone());
 
     return static_cast<wxThread::ExitCode>(NULL); 
 }
@@ -367,7 +361,7 @@ MyFrame::MyFrame(): wxFrame(NULL, wxID_ANY, "RSA Mail Client") {
     hBox1->Add(mailFolder, 1);
 
 
-    inboxListBox = new wxListBox(this, ID_ListBox_Inbox);
+    inboxListBox = new wxSimpleHtmlListBox(this, ID_ListBox_Inbox);
     vBox1->Add(inboxListBox, 1, wxEXPAND);
     this->Connect(ID_ListBox_Inbox, wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler(MyFrame::OnMailSelected), NULL, this);
     //Rich Text Control
@@ -611,43 +605,59 @@ void MyFrame::OnDeleteAccount(wxCommandEvent& event){
     }
 }
 
+void MyFrame::UpdateInboxListBox(){
+    inboxListBox->Clear();
+    wxSystemSettings settings;
+    wxColour color;
+    std::vector<Mail_Caption> tmp;
+    if(mailFolder->GetSelection() == 0) {
+        tmp = database.getMailCaptions();
+        for (int i = 0; i < tmp.size(); i++){
+            if(i != inboxListBox->GetSelection()){
+                color = settings.GetColour(wxSYS_COLOUR_LISTBOXTEXT);
+            } else {
+                color = settings.GetColour(wxSYS_COLOUR_LISTBOXHIGHLIGHTTEXT);
+            }
+            if(tmp.at(i).Read == 0){
+                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).caption + " (Ungelesen)</b> <br>Von: " + database.getSender(&rsa, i) + "</font>");
+            } else {
+                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).caption + "</b> <br>Von: " + database.getSender(&rsa, i)+ "</font>");
+            }
+        }
+    } else if(mailFolder->GetSelection() == 1) {
+        tmp = database.getSentCaptions();
+        for (int i = 0; i < tmp.size(); i++){
+            if(i != inboxListBox->GetSelection()){
+                color = settings.GetColour(wxSYS_COLOUR_LISTBOXTEXT);
+            } else {
+                color = settings.GetColour(wxSYS_COLOUR_LISTBOXHIGHLIGHTTEXT);
+            }
+            if(tmp.at(i).Read == 0){
+                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).caption + " (Ungelesen)</b> <br>An: " + database.getReceiver(&rsa, i)+ "</font>");
+            } else {
+                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).caption + "</b> <br>An: " + database.getReceiver(&rsa, i)+ "</font>");
+            }
+        }
+    }
+}
+
 void MyFrame::OnMailSyncTimer(wxTimerEvent& event) {
     if (database.isConnected()){
         //Get Messages
         if(mailFolder->GetSelection() == 0) {
-        if (database.messagesAvailable()){
-            std::vector<Mail_Caption> captions = database.receiveCaptions(&rsa);
-            //Add to ListBox
-            
-                inboxListBox->Clear();
-                for (int i = 0; i < captions.size(); i++){
-                    if(captions.at(i).Read == 0){
-                        inboxListBox->Append(captions.at(i).caption + " (Ungelesen)");
-                    } else {
-                        inboxListBox->Append(captions.at(i).caption);
-                    }
-                }
+            if (database.messagesAvailable()){
+                database.receiveCaptions(&rsa);
+                UpdateInboxListBox();
             }
         } else if (mailFolder->GetSelection() == 1){
             if(database.sentMessagesAvailable()){
-                //Get Sent Messages
-                std::vector<Mail_Caption> captions = database.receiveSentCaptions(&rsa);
-                //Add to ListBox
-                
-                inboxListBox->Clear();
-                for (int i = 0; i < captions.size(); i++){
-                    if(captions.at(i).Read == 0){
-                        inboxListBox->Append(captions.at(i).caption + " (Ungelesen)");
-                    } else {
-                        inboxListBox->Append(captions.at(i).caption);
-                    }
-                }
+                database.receiveSentCaptions(&rsa);
+                UpdateInboxListBox();
             }
             //Check read states
             if (database.updateSentRead(&rsa)){
                 //Update ListBox
-                wxCommandEvent event(wxEVT_COMMAND_CHOICE_SELECTED, wxID_ANY);
-                OnMailFolderChanged(event);
+                UpdateInboxListBox();
             }
         }
     } else {
@@ -663,19 +673,8 @@ void MyFrame::OnMailFolderChanged(wxCommandEvent& event){
     mailTimer->Notify();
     mailText->Clear();
     inboxListBox->Clear();
-    std::vector<Mail_Caption> tmp;
-    if(mailFolder->GetSelection() == 0) {
-        tmp = database.getMailCaptions();
-    } else if(mailFolder->GetSelection() == 1) {
-        tmp = database.getSentCaptions();
-    }
-    for (int i = 0; i < tmp.size(); i++){
-        if(tmp.at(i).Read == 0){
-            inboxListBox->Append(tmp.at(i).caption + " (Ungelesen)");
-        } else {
-            inboxListBox->Append(tmp.at(i).caption);
-        }
-    }
+    
+    UpdateInboxListBox();
 }
 
 
@@ -688,7 +687,7 @@ void MyFrame::OnMailSelected(wxCommandEvent& event){
         //Gelesen markieren
         if (!database.getRead(inboxListBox->GetSelection())){
             database.setRead(&rsa, inboxListBox->GetSelection());
-            inboxListBox->SetString(inboxListBox->GetSelection(), database.getCaption(inboxListBox->GetSelection()));
+            UpdateInboxListBox();
         }
         if(database.mailSignatureValid(&rsa, inboxListBox->GetSelection())){
             senderText->SetLabelText(std::wstring("Sender: " + database.getSender(&rsa, inboxListBox->GetSelection()) + L" (ID OK) Gesendet: " + database.getDate(inboxListBox->GetSelection()) + L" Empfangen: " + database.getReceiveDate(inboxListBox->GetSelection())));
@@ -702,9 +701,9 @@ void MyFrame::OnMailSelected(wxCommandEvent& event){
             mailText->Clear();
             mailText->WriteText(database.receiveSentMail(&rsa, inboxListBox->GetSelection()));
             if(database.getSentRead(inboxListBox->GetSelection())){
-                senderText->SetLabelText(std::wstring(L"Sender: Ich Gesendet: " + database.getSentDate(inboxListBox->GetSelection()) + L" Empfangen: " + database.getSentReceiveDate(inboxListBox->GetSelection())));
+                senderText->SetLabelText(std::wstring(L"Empfänger: "+database.getReceiver(&rsa, inboxListBox->GetSelection())+" Gesendet: " + database.getSentDate(inboxListBox->GetSelection()) + L" Empfangen: " + database.getSentReceiveDate(inboxListBox->GetSelection())));
             } else {
-                senderText->SetLabelText(std::wstring(L"Sender: Ich Gesendet: " + database.getSentDate(inboxListBox->GetSelection()) + L" Empfangen: noch nicht"));
+                senderText->SetLabelText(std::wstring(L"Empfänger: "+database.getReceiver(&rsa, inboxListBox->GetSelection())+" Gesendet: " + database.getSentDate(inboxListBox->GetSelection()) + L" Empfangen: noch nicht"));
             }
         }
     }
@@ -784,7 +783,7 @@ void LoginFrame::OnPasswordReset(wxCommandEvent& event){
                     //Change Password
                     if (database.hasEmail()){
                         //Email Request
-                        int code = database.sendVerifcationEmail(&rsa);
+                        int code = database.sendPasswordResetEmail(&rsa);
                         wxMessageBox(L"Es wurde eine Email zur Bestätigung Ihrer Identität verschickt. Bitte geben Sie den dort enthaltenen Bestätigungscode im folgenden Fenster ein.", "Passwort zurücksetzen", wxOK);
                         //Ask for Code
                         wxTextEntryDialog dlg(this, L"Bitte geben Sie den Bestätigungscode ein.", "Email Verifizierung", "", wxOK | wxCANCEL);
@@ -992,6 +991,7 @@ RegisterFrame::RegisterFrame(): wxFrame(NULL, wxID_ANY, "Registrierung") {
 void RegisterFrame::OnRegister(wxCommandEvent& event){
     email = L"None";
     bool continueProcess = true;
+    bool emailValid = true;
     if (registerframe->ipEdit->GetValue() != "" && registerframe->usernameEdit->GetValue() != "" && registerframe->passwordEdit->GetValue() != "" && registerframe->passwordRepeatEdit->GetValue() != ""){
         if(registerframe->emailEdit->GetValue() == ""){
             if(!wxMessageBox(L"Sie haben keine Email-Adresse eingegeben. Diese wird benötigt, falls Sie Ihr Passwort vergessen. Falls Sie keine Email-Adresse angeben möchten, können Sie Ihr Benutzerkonto bei Verlust des Passwortes nur noch löschen. Wollen Sie fortfahren?", "Email-Adresse", wxYES_NO) == wxYES){
@@ -1017,17 +1017,35 @@ void RegisterFrame::OnRegister(wxCommandEvent& event){
                         if (database.userExists(&rsa)){
                             wxMessageBox("Es gibt schon einen Benutzer unter diesem Namen!", "Fehler", wxOK);
                         } else {
-                            //Create New User
-                            progress = new wxProgressDialog("Benutzer erstellen", "Erstelle Benutzer... Bitte warten.", 100, frame);
-                            progress->CenterOnParent();
-                            progress->Show();
-                            wxYield();
-                            RegisterThread* thread = CreateRegisterThread();
-                            thread->Run();
-                            frame->waitThread = frame->CreateWaitThread();
-                            frame->waitThread->Run();
+                            if (email != L"None"){
+                                //Verify Email
+                                int code = database.sendVerificationEmail(&rsa, std::string(email.begin(), email.end()));
+                                wxMessageBox(L"Es wurde eine Email zur Bestätigung Ihrer Email-Adresse verschickt. Bitte geben Sie den dort enthaltenen Bestätigungscode im folgenden Fenster ein.", "Benutzerkonto erstellen", wxOK);
+                                wxTextEntryDialog dlg(this, L"Bitte geben Sie den Bestätigungscode ein.", "Email Verifizierung", "", wxOK | wxCANCEL);
+                                if(dlg.ShowModal() == wxID_OK){
+                                    if(dlg.GetValue() == std::to_string(code)){
+                                        wxMessageBox("Der eingegebene Code ist richtig. Das Benutzerkonto kann erstellt werden.", "Email Verifizierung", wxOK);
+                                        emailValid = true;
+                                    } else {
+                                        wxMessageBox("Der eingegebene Code ist falsch. Das Benutzerkonto kann nicht erstellt werden.", "Email Verifizierung", wxOK);
+                                        emailValid = false;
+                                        registerframe->Close();
+                                    }
+                                }
+                            } 
+                            if(emailValid){
+                                //Create New User
+                                progress = new wxProgressDialog("Benutzer erstellen", "Erstelle Benutzer... Bitte warten.", 100, frame);
+                                progress->CenterOnParent();
+                                progress->Show();
+                                wxYield();
+                                RegisterThread* thread = CreateRegisterThread();
+                                thread->Run();
+                                frame->waitThread = frame->CreateWaitThread();
+                                frame->waitThread->Run();
 
-                            registerframe->Close();
+                                registerframe->Close();
+                            }
                         }
                     } else {
                         wxMessageBox(L"Die Version dieses Clients stimmt nicht mit der des Servers überein. Bitte laden Sie die neuste Version herunter.", "Versionsfehler", wxOK);
