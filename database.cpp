@@ -6,7 +6,7 @@
 bool Mail_Database::connect(std::string ip){
 
     mysql = mysql_init(NULL);
-    if (!mysql_real_connect(mysql, ip.c_str(), db_username.c_str(), db_password.c_str(), "RSA_Mail", 80, NULL, 0)) {
+    if (!mysql_real_connect(mysql, ip.c_str(), db_username.c_str(), db_password.c_str(), "RSA_Mail", db_port, NULL, 0)) {
         std::cout << mysql_error(mysql) << std::endl;
         return false;
     } else {
@@ -70,9 +70,9 @@ int Mail_Database::userExists(RSA_Encryptor* rsa, std::string value) {
     return result;
 }
 
-void Mail_Database::createUser(RSA_Encryptor* rsa, std::wstring email){
-    if(email != "None"){
-        if(mysql_query(mysql, std::string("INSERT INTO `Users`(`Name`, `E`, `N`, `Password`, `Email`) VALUES (\"" + rsa->encryptString(std::wstring(account_username.begin(), account_username.end()), pubNameKey) + "\",\"" + rsa->getE() + "\", \"" + rsa->getN() + "\", \"" + rsa->encryptString(account_password, rsa->getPubKey()) + "\", \"" + rsa->encryptString(email, rsa->getPubKey()) + "\")").c_str())){
+void Mail_Database::createUser(RSA_Encryptor* rsa){
+    if(account_email != L"None"){
+        if(mysql_query(mysql, std::string("INSERT INTO `Users`(`Name`, `E`, `N`, `Password`, `Email`) VALUES (\"" + rsa->encryptString(std::wstring(account_username.begin(), account_username.end()), pubNameKey) + "\",\"" + rsa->getE() + "\", \"" + rsa->getN() + "\", \"" + rsa->encryptString(account_password, rsa->getPubKey()) + "\", \"" + rsa->encryptString(account_email, rsa->getPubKey()) + "\")").c_str())){
             std::cout << mysql_error(mysql) << std::endl;
         }
     } else {
@@ -758,4 +758,8 @@ int Mail_Database::sendVerificationEmail(RSA_Encryptor* rsa, std::string emailAd
 
     return randomCode;
     
+}
+
+void Mail_Database::setEmail(std::wstring email){
+    account_email = email;
 }

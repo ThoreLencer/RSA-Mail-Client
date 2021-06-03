@@ -13,7 +13,7 @@
 #include <quickmail.h>
 
 
-#define CLIENT_VERSION 12
+#define CLIENT_VERSION 14
 
 struct Mail_Caption{
     int ID;
@@ -32,6 +32,7 @@ class Mail_Database {
         int account_id;
         std::string account_username;
         std::wstring account_password;
+        std::wstring account_email;
         std::vector<Mail_Caption> mail_captions;
         std::vector<Mail_Caption> sent_captions;
         bool connected;
@@ -55,7 +56,7 @@ class Mail_Database {
         int userExists(RSA_Encryptor* rsa, std::string value);
         RSA_Pub_Key userKey(RSA_Encryptor* rsa, std::string value);
         RSA_Pub_Key userKey(RSA_Encryptor* rsa, int value);
-        void createUser(RSA_Encryptor* rsa, std::wstring email);
+        void createUser(RSA_Encryptor* rsa);
         void deleteUser();
         bool passwordValid(RSA_Encryptor* rsa);
         bool passwordSecure(std::wstring passwd);
@@ -87,5 +88,6 @@ class Mail_Database {
         bool hasEmail();
         int sendPasswordResetEmail(RSA_Encryptor* rsa);
         int sendVerificationEmail(RSA_Encryptor* rsa, std::string emailAdress);
+        void setEmail(std::wstring email);
 };
 
