@@ -7,7 +7,6 @@
             "args": [
                 "-g",
                 "main.cpp",
-<<<<<<< HEAD
                 "GUI/mainFrame.cpp",
                 "Encryptor/rsa_encryption.cpp",
                 "Database/database.cpp",
@@ -16,16 +15,6 @@
                 "GUI/register.cpp",
                 "-o",
                 "../buildLinux/RSA_Client",
-=======
-                "mainFrame.cpp",
-                "rsa_encryption.cpp",
-                "database.cpp",
-                "login.cpp",
-                "mailwriter.cpp",
-                "register.cpp",
-                "-o",
-                "RSA_Client",
->>>>>>> 1898e210a65b6c5a6736cee2a0c007f01078788d
                 "-I/usr/local/lib/wx/include/gtk2-unicode-static-3.0",
                 "-I/usr/local/include/wx-3.0",
                 "-I/usr/include/mysql",
@@ -109,7 +98,6 @@
             "command": "/usr/bin/x86_64-w64-mingw32-g++",
             "args": [
                 "main.cpp",
-<<<<<<< HEAD
                 "GUI/mainFrame.cpp",
                 "Encryptor/rsa_encryption.cpp",
                 "Database/database.cpp",
@@ -118,16 +106,6 @@
                 "GUI/register.cpp",
                 "-o",
                 "../buildWin/RSA_Client.exe",
-=======
-                "mainFrame.cpp",
-                "rsa_encryption.cpp",
-                "database.cpp",
-                "login.cpp",
-                "mailwriter.cpp",
-                "register.cpp",
-                "-o",
-                "RSA_Client.exe",
->>>>>>> 1898e210a65b6c5a6736cee2a0c007f01078788d
                 "-I/usr/x86_64-w64-mingw32/lib/wx/include/x86_64-w64-mingw32-msw-unicode-static-3.0",
                 "-I/usr/x86_64-w64-mingw32/include/wx-3.0",
                 "-I/usr/x86_64-w64-mingw32/include",
@@ -203,10 +181,6 @@
             "label": "UploaderBuild",
             "command": "/usr/bin/g++",
             "args": [
-<<<<<<< HEAD
-=======
-                "-g",
->>>>>>> 1898e210a65b6c5a6736cee2a0c007f01078788d
                 "update_upload.cpp",
                 "-o",
                 "Update_Upload",
