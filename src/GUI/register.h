@@ -4,6 +4,7 @@
 #include "../define.h"
 #include "../Database/database.h"
 #include "../Encryptor/rsa_encryption.h"
+#include "../Icon.xpm.h"
 
 wxDECLARE_EVENT(EVT_COMMAND_PERFORMUPDATE, wxCommandEvent);
 wxDECLARE_EVENT(EVT_COMMAND_CLEARMAILVIEW, wxCommandEvent);

@@ -44,6 +44,7 @@ WaitThread::~WaitThread(){}
 MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxID_ANY, "RSA Mail Client") {
     this->database = database;
     this->rsa = rsa;
+    this->SetIcon(icon_xmp);
     wxFont myFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     //Description of the GUI
     wxMenu *menuKey = new wxMenu;
@@ -117,6 +118,7 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
     Bind(wxEVT_MENU, &MyFrame::OnDeleteMail, this, ID_Delete_Mail);
     Bind(wxEVT_MENU, &MyFrame::OnDeleteAccount, this, ID_Delete);
     Bind(wxEVT_MENU, &MyFrame::OnGetData, this, ID_Data_Get);
+    Bind(wxEVT_MENU, &MyFrame::OnExit, this, wxID_EXIT);
 
     Bind(EVT_COMMAND_PERFORMUPDATE, &MyFrame::performUpdate, this);
     Bind(EVT_COMMAND_CLEARMAILVIEW, &MyFrame::OnClearMailView, this);
@@ -129,8 +131,15 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
     this->Connect(ID_Mail_Folder_Change, wxEVT_CHOICE, wxCommandEventHandler(MyFrame::OnMailFolderChanged), NULL, this);
 }
 
+void MyFrame::OnExit(wxCommandEvent& event){
+    Close(true);
+}
+
 MyFrame::~MyFrame(){
-    this->Disconnect(ID_Timer_Mail_Sync, wxEVT_TIMER, wxTimerEventHandler(MyFrame::OnMailSyncTimer), NULL, this);
+    delete waitThread;
+    delete loginframe;
+    delete registerframe;
+    delete writerframe;
 }
 
 WaitThread *MyFrame::CreateWaitThread()

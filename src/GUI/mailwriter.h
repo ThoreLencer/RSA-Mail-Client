@@ -4,6 +4,7 @@
 #include <wx/wx.h>
 #include <wx/richtext/richtextctrl.h>
 #include "../define.h"
+#include "../Icon.xpm.h"
 
 class MailWriterFrame : public wxFrame {
 public:

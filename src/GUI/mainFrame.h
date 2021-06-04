@@ -6,6 +6,8 @@
 #include "mailwriter.h"
 #include "register.h"
 #include "../define.h"
+#include "../Icon.xpm.h"
+
 class WaitThread;
 class UpdateThread;
 class RegisterThread;
@@ -56,6 +58,7 @@ private:
     void OnPerformRegister(wxCommandEvent& event);
     void OnInboxContextMenu(wxContextMenuEvent& event);
     void OnContextMenuSelected(wxCommandEvent& event);
+    void OnExit(wxCommandEvent& event);
 
     UpdateThread *CreateUpdateThread();
     RegisterThread *CreateRegisterThread();

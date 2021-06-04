@@ -3,6 +3,7 @@
 #include "../Database/database.h"
 #include "../Encryptor/rsa_encryption.h"
 #include "../define.h"
+#include "../Icon.xpm.h"
 
 wxDECLARE_EVENT(EVT_COMMAND_CLEARMAILVIEW, wxCommandEvent);
 wxDECLARE_EVENT(EVT_COMMAND_LOGGEDIN, wxCommandEvent);

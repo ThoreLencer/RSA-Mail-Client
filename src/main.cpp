@@ -44,6 +44,7 @@ class MyApp : public wxApp {
     wxLocale m_locale;
 public:
     virtual bool OnInit();
+    virtual int OnExit();
 };
 
 wxIMPLEMENT_APP(MyApp);
@@ -73,4 +74,12 @@ bool MyApp::OnInit() {
     database.init();
     rsa.init();
     return true;
+}
+
+int MyApp::OnExit() {
+    delete &database;
+    delete &rsa;
+    delete frame;
+
+    return this->wxApp::OnExit();
 }

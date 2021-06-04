@@ -144,6 +144,7 @@ LoginFrame::LoginFrame(Mail_Database* database, RSA_Encryptor* rsa, wxEvtHandler
     this->database = database;
     this->rsa = rsa;
     this->mainFrameHandler = mainFrame;
+    this->SetIcon(icon_xmp);
     wxFont myFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     //Description of the GUI
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
