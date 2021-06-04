@@ -81,6 +81,9 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
     inboxListBox = new wxSimpleHtmlListBox(this, ID_ListBox_Inbox);
     vBox1->Add(inboxListBox, 1, wxEXPAND);
     this->Connect(ID_ListBox_Inbox, wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler(MyFrame::OnMailSelected), NULL, this);
+    inboxListBox->Connect(wxEVT_CONTEXT_MENU, wxContextMenuEventHandler(MyFrame::OnInboxContextMenu), this);
+    Bind(wxEVT_COMMAND_MENU_SELECTED, &MyFrame::OnContextMenuSelected, this, ID_MENU_CONTEXT_INBOX_1);
+
     //Rich Text Control
     wxStaticText* mailboxText = new wxStaticText(this, wxID_ANY, L"Nachricht:", wxPoint(320, 15));
     hBox1->Add(mailboxText, 3);
@@ -188,6 +191,32 @@ void MyFrame::OnPerformRegister(wxCommandEvent& event){
 
 void MyFrame::OnPulseProgress(wxThreadEvent& event){
     progress->Pulse();
+}
+
+void MyFrame::OnInboxContextMenu(wxContextMenuEvent& event){
+    wxMenu menu;
+    menu.Append(ID_MENU_CONTEXT_INBOX_1, L"Löschen");
+    menu.Append(ID_MENU_CONTEXT_INBOX_2, "Antworten");
+    menu.Append(ID_MENU_CONTEXT_INBOX_3, "Weiterleiten");
+        
+    PopupMenu(&menu); 
+}
+
+void MyFrame::OnContextMenuSelected(wxCommandEvent& event){
+    switch (event.GetId()) {
+            case ID_MENU_CONTEXT_INBOX_1:
+            {
+                wxThreadEvent event(wxEVT_MENU, ID_Delete_Mail);
+                wxQueueEvent(this, event.Clone());
+                break;
+            }
+            case ID_MENU_CONTEXT_INBOX_2:
+                std::cout << "Context Menu command 2";
+                break;
+            case ID_MENU_CONTEXT_INBOX_3:
+                std::cout << "Context Menu command 3";
+                break;
+        }
 }
 
 void MyFrame::OnClearMailView(wxCommandEvent& event){

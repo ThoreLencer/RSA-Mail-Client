@@ -33,5 +33,8 @@ enum {
     ID_Button_Send,
     ID_Timer_Mail_Sync,
     ID_ListBox_Inbox,
-    ID_Text_Mail
+    ID_Text_Mail,
+    ID_MENU_CONTEXT_INBOX_1,
+    ID_MENU_CONTEXT_INBOX_2,
+    ID_MENU_CONTEXT_INBOX_3
 };

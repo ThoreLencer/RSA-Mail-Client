@@ -54,6 +54,8 @@ private:
     void OnLoggedIn(wxCommandEvent& event);
     void UpdateInboxListBox(int selection);
     void OnPerformRegister(wxCommandEvent& event);
+    void OnInboxContextMenu(wxContextMenuEvent& event);
+    void OnContextMenuSelected(wxCommandEvent& event);
 
     UpdateThread *CreateUpdateThread();
     RegisterThread *CreateRegisterThread();
