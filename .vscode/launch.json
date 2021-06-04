@@ -8,11 +8,7 @@
             "name": "g++ - Aktive Datei erstellen und debuggen",
             "type": "cppdbg",
             "request": "launch",
-<<<<<<< HEAD
             "program": "${fileDirname}/../buildLinux/RSA_Client",
-=======
-            "program": "${fileDirname}/RSA_Client",
->>>>>>> 1898e210a65b6c5a6736cee2a0c007f01078788d
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

@@ -8,7 +8,7 @@
 #include "../Encryptor/rsa_encryption.h"
 #include <fstream>
 #include <vector>
-#include "../../Secure/secure.h"
+#include "../Secure/secure.h"
 #include <ctime>
 #include <quickmail.h>
 
