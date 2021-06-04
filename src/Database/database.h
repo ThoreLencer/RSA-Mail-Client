@@ -8,9 +8,23 @@
 #include "../Encryptor/rsa_encryption.h"
 #include <fstream>
 #include <vector>
-#include "../Secure/secure.h"
 #include <ctime>
 #include <quickmail.h>
+
+/*
+    secure.h:
+    const std::string namekey_d = "private rsa key for name decryption";
+    const std::string namekey_e = "public rsa key (e) for name encryption";
+    const std::string namekey_n = "public rsa key (n) for name encryption";
+        
+    const std::string db_username = "database username";
+    const std::string db_password = "database password";
+
+    const std::string verify_adress = "verify email adress";
+    const std::string verify_password = "verify email password";
+
+*/
+#include "../Secure/secure.h"
 
 
 #define CLIENT_VERSION 14
