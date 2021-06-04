@@ -20,6 +20,7 @@
                 "-I/usr/include/mysql",
                 "-I/usr/include",
                 "-I/usr/include/x86_64-linux-gnu",
+                "/usr/lib/x86_64-linux-gnu/libmysqlclient.a",
                 "/usr/local/lib/libquickmail.a",
                 "-D_FILE_OFFSET_BITS=64",
                 "-D__WXGTK__",
@@ -63,6 +64,8 @@
                 "-lz",
                 "-ldl",
                 "-lresolv",
+                "-lssl",
+                "-lcrypto",
                 "-lm",
                 "-lcurl",
                 "-static-libstdc++",
@@ -73,8 +76,7 @@
                 "-std=c++11",
                 "-lpthread",
                 "-ldl",
-                "-lrt",
-                "-lmysqlclient"
+                "-lrt"
 
 
 
