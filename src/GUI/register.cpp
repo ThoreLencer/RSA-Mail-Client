@@ -11,46 +11,48 @@ RegisterFrame::RegisterFrame(Mail_Database* database, RSA_Encryptor* rsa, wxEvtH
     #endif
     wxFont myFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     //Description of the GUI
+    //Panel for TAB Order working
+    wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
     wxFlexGridSizer* gridSizer = new wxFlexGridSizer(5, 2, 5, 5);
 
-    wxStaticText* ipText = new wxStaticText(this, wxID_ANY, L"IP-Adresse:", wxPoint(10, 15));
+    wxStaticText* ipText = new wxStaticText(panel, wxID_ANY, L"IP-Adresse:", wxPoint(10, 15));
     ipText->SetFont(myFont);
     gridSizer->Add(ipText, 1, wxEXPAND);
-    ipEdit = new wxTextCtrl(this, ID_Edit_IP, L"rsamail.ddns.net", wxPoint(100, 10), wxSize(100, 30));
+    ipEdit = new wxTextCtrl(panel, ID_Edit_IP, L"rsamail.ddns.net", wxPoint(100, 10), wxSize(100, 30));
     ipEdit->SetFont(myFont);
     gridSizer->Add(ipEdit, 1, wxEXPAND);
-    wxStaticText* usernameText = new wxStaticText(this, wxID_ANY, L"Benutzername:", wxPoint(10, 65));
+    wxStaticText* usernameText = new wxStaticText(panel, wxID_ANY, L"Benutzername:", wxPoint(10, 65));
     usernameText->SetFont(myFont);
     gridSizer->Add(usernameText, 1, wxEXPAND);
-    usernameEdit = new wxTextCtrl(this, ID_Edit_Username, L"", wxPoint(100, 60), wxSize(100, 30));
+    usernameEdit = new wxTextCtrl(panel, ID_Edit_Username, L"", wxPoint(100, 60), wxSize(100, 30));
     usernameEdit->SetFont(myFont);
     gridSizer->Add(usernameEdit, 1, wxEXPAND);
-    wxStaticText* emailText = new wxStaticText(this, wxID_ANY, L"Email:", wxPoint(10, 65));
+    wxStaticText* emailText = new wxStaticText(panel, wxID_ANY, L"Email:", wxPoint(10, 65));
     emailText->SetFont(myFont);
     gridSizer->Add(emailText, 1, wxEXPAND);
-    emailEdit = new wxTextCtrl(this, ID_Edit_Email, L"", wxPoint(100, 60), wxSize(100, 30));
+    emailEdit = new wxTextCtrl(panel, ID_Edit_Email, L"", wxPoint(100, 60), wxSize(100, 30));
     emailEdit->SetFont(myFont);
     gridSizer->Add(emailEdit, 1, wxEXPAND);
-    wxStaticText* passwordText = new wxStaticText(this, wxID_ANY, L"Passwort:", wxPoint(10, 125));
+    wxStaticText* passwordText = new wxStaticText(panel, wxID_ANY, L"Passwort:", wxPoint(10, 125));
     passwordText->SetFont(myFont);
     gridSizer->Add(passwordText, 1, wxEXPAND);
-    passwordEdit = new wxTextCtrl(this, ID_Edit_Password, L"", wxPoint(100, 110), wxSize(100, 30), wxTE_PASSWORD);
+    passwordEdit = new wxTextCtrl(panel, ID_Edit_Password, L"", wxPoint(100, 110), wxSize(100, 30), wxTE_PASSWORD);
     passwordEdit->SetFont(myFont);
     gridSizer->Add(passwordEdit, 1, wxEXPAND);
-    wxStaticText* passwordRepeatText = new wxStaticText(this, wxID_ANY, L"wiederholen:", wxPoint(10, 125));
+    wxStaticText* passwordRepeatText = new wxStaticText(panel, wxID_ANY, L"wiederholen:", wxPoint(10, 125));
     passwordRepeatText->SetFont(myFont);
     gridSizer->Add(passwordRepeatText, 1, wxEXPAND);
-    passwordRepeatEdit = new wxTextCtrl(this, ID_Edit_Password_Repeat, L"", wxPoint(100, 110), wxSize(100, 30), wxTE_PASSWORD);
+    passwordRepeatEdit = new wxTextCtrl(panel, ID_Edit_Password_Repeat, L"", wxPoint(100, 110), wxSize(100, 30), wxTE_PASSWORD);
     passwordRepeatEdit->SetFont(myFont);
     gridSizer->Add(passwordRepeatEdit, 1, wxEXPAND);
     gridSizer->AddGrowableCol(1, 1);
 
-    wxButton* registerButton = new wxButton(this, ID_Button_Register, L"Registrieren", wxPoint(100, 150), wxSize(100, 50));
+    wxButton* registerButton = new wxButton(panel, ID_Button_Register, L"Registrieren", wxPoint(100, 150), wxSize(100, 50));
 
     mainSizer->Add(gridSizer, 1, wxEXPAND);
     mainSizer->Add(registerButton, 0, wxEXPAND);
-    this->SetSizer(mainSizer);
+    panel->SetSizer(mainSizer);
     Bind(wxEVT_BUTTON, &RegisterFrame::OnRegister, this, ID_Button_Register);
 }
 

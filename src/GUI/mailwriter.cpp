@@ -9,32 +9,34 @@ MailWriterFrame::MailWriterFrame(Mail_Database* database, RSA_Encryptor* rsa): w
         this->SetIcon(icon_xmp);
     #endif
     wxFont myFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+    //Panel for TAB Order working
+    wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText* toText = new wxStaticText(this, wxID_ANY, L"An:");
-    toEdit = new wxTextCtrl(this, ID_Edit_To, "");
+    wxStaticText* toText = new wxStaticText(panel, wxID_ANY, L"An:");
+    toEdit = new wxTextCtrl(panel, ID_Edit_To, "");
     toEdit->SetFont(myFont);
     mainSizer->Add(toText, 0, wxEXPAND);
     mainSizer->Add(toEdit, 0, wxEXPAND);
 
-    wxStaticText* captionText = new wxStaticText(this, wxID_ANY, L"Betreff:");
-    captionEdit = new wxTextCtrl(this, ID_Edit_Caption, "");
+    wxStaticText* captionText = new wxStaticText(panel, wxID_ANY, L"Betreff:");
+    captionEdit = new wxTextCtrl(panel, ID_Edit_Caption, "");
     captionEdit->SetFont(myFont);
     mainSizer->Add(captionText, 0, wxEXPAND);
     mainSizer->Add(captionEdit, 0, wxEXPAND);
 
-    wxStaticText* mailboxText = new wxStaticText(this, wxID_ANY, L"Nachricht:");
+    wxStaticText* mailboxText = new wxStaticText(panel, wxID_ANY, L"Nachricht:");
     mainSizer->Add(mailboxText, 0, wxEXPAND);
 
-    mailEdit = new wxRichTextCtrl(this, ID_Edit_Mail, "");
+    mailEdit = new wxRichTextCtrl(panel, ID_Edit_Mail, "");
     mailEdit->SetFont(myFont);
     mainSizer->Add(mailEdit, 1, wxEXPAND);
 
-    wxButton* sendButton = new wxButton(this, ID_Button_Send, L"Senden");
+    wxButton* sendButton = new wxButton(panel, ID_Button_Send, L"Senden");
     mainSizer->Add(sendButton, 0, wxCENTER);
 
     Bind(wxEVT_BUTTON, &MailWriterFrame::OnSend, this, ID_Button_Send);
 
-    this->SetSizer(mainSizer);
+    panel->SetSizer(mainSizer);
 }
 
 void MailWriterFrame::OnSend(wxCommandEvent& event) {

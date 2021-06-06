@@ -54,6 +54,7 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
 
     wxFont myFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     //Description of the GUI
+
     wxMenu *menuKey = new wxMenu;
     menuKey->Append(ID_GenKeys, L"rsa-Test", L"Führt den RSA-Test aus!");
     wxMenu *menuConnect = new wxMenu;
@@ -71,7 +72,8 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
     menuBar->Append(menuKey, L"&Schlüssel");
     SetMenuBar( menuBar );
 
-    //wxPanel* panel = new wxPanel(this, wxID_ANY);
+    //Panel for TAB Order working
+    wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     wxBoxSizer* mainBox = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* hBox1 = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* hBox3 = new wxBoxSizer(wxHORIZONTAL);
@@ -79,30 +81,30 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
     wxBoxSizer* vBox1 = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* vBox2 = new wxBoxSizer(wxVERTICAL);
     //Caption Listbox
-    mailFolder = new wxChoice(this, ID_Mail_Folder_Change);
+    mailFolder = new wxChoice(panel, ID_Mail_Folder_Change);
     mailFolder->AppendString("Posteingang");
     mailFolder->AppendString("Gesendete");
     mailFolder->SetSelection(0);
     hBox1->Add(mailFolder, 1);
 
 
-    inboxListBox = new wxSimpleHtmlListBox(this, ID_ListBox_Inbox);
+    inboxListBox = new wxSimpleHtmlListBox(panel, ID_ListBox_Inbox);
     vBox1->Add(inboxListBox, 1, wxEXPAND);
     this->Connect(ID_ListBox_Inbox, wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler(MyFrame::OnMailSelected), NULL, this);
     inboxListBox->Connect(wxEVT_CONTEXT_MENU, wxContextMenuEventHandler(MyFrame::OnInboxContextMenu), this);
     Bind(wxEVT_COMMAND_MENU_SELECTED, &MyFrame::OnContextMenuSelected, this, ID_MENU_CONTEXT_INBOX_1);
 
     //Rich Text Control
-    wxStaticText* mailboxText = new wxStaticText(this, wxID_ANY, L"Nachricht:", wxPoint(320, 15));
+    wxStaticText* mailboxText = new wxStaticText(panel, wxID_ANY, L"Nachricht:", wxPoint(320, 15));
     hBox1->Add(mailboxText, 3);
-    mailText = new wxHtmlWindow(this, ID_Text_Mail);
+    mailText = new wxHtmlWindow(panel, ID_Text_Mail);
     wxSystemSettings settings;
     wxColour color = settings.GetColour(wxSYS_COLOUR_WINDOW);
     mailText->SetBackgroundColour(color);
     vBox2->Add(mailText, 1, wxEXPAND);
 
-    senderText = new wxStaticText(this, wxID_ANY, "Sender: ");
-    accountText = new wxStaticText(this, wxID_ANY, "Benutzer: ");
+    senderText = new wxStaticText(panel, wxID_ANY, "Sender: ");
+    accountText = new wxStaticText(panel, wxID_ANY, "Benutzer: ");
     hBox3->Add(accountText, 1, wxEXPAND);
     hBox3->Add(senderText, 3, wxEXPAND);
     
@@ -113,7 +115,7 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
     mainBox->Add(hBox3, 0, wxEXPAND);
     mainBox->Add(hBox2, 1, wxEXPAND);
 
-    this->SetSizer(mainBox);
+    panel->SetSizer(mainBox);
 
     CreateStatusBar();
     SetStatusText("RSA Mail Client!");
