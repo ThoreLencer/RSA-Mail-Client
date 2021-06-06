@@ -489,6 +489,20 @@ std::wstring Mail_Database::getSentReceiveDate(int ID){
     return sent_captions.at(ID).receiveDate;
 }
 
+int Mail_Database::getCurrentCaptionCount(){
+    return mail_captions.size();
+}
+
+int Mail_Database::getCurrentUnreadCaptionCount(){
+    int count = 0;
+    for (int i = 0; i < mail_captions.size(); i++){
+        if(mail_captions.at(i).Read == false){
+            count++;
+        }
+    }
+    return count;
+}
+
 void Mail_Database::sendMail(RSA_Encryptor* rsa, int To, std::wstring Caption, std::wstring Message, RSA_Pub_Key key) {
     RSA_Pub_Key signKey;
     mpz_init_set(signKey.e, rsa->getPrivKey().d);

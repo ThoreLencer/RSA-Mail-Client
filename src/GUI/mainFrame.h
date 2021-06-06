@@ -7,6 +7,7 @@
 #include "register.h"
 #include "../define.h"
 #include "../Icon.xpm.h"
+#include <wx/notifmsg.h>
 #include <regex>
 
 class WaitThread;

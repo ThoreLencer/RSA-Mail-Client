@@ -27,7 +27,7 @@
 #include "../Secure/secure.h"
 
 
-#define CLIENT_VERSION 16
+#define CLIENT_VERSION 17
 
 struct Mail_Caption{
     int ID;
@@ -60,6 +60,8 @@ class Mail_Database {
         bool versionValid();
         bool isConnected();
         bool messagesAvailable();
+        int getCurrentCaptionCount();
+        int getCurrentUnreadCaptionCount();
         bool sentMessagesAvailable();
         std::vector<Mail_Caption> receiveCaptions(RSA_Encryptor* rsa);
         std::vector<Mail_Caption> receiveSentCaptions(RSA_Encryptor* rsa);

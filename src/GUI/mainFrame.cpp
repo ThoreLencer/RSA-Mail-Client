@@ -417,11 +417,20 @@ void MyFrame::UpdateInboxListBox(int selection){
 }
 
 void MyFrame::OnMailSyncTimer(wxTimerEvent& event) {
+    //Old Non_Read Message Count
+    int oldcount = database->getCurrentCaptionCount();
     if (database->isConnected()){
         //Get Messages
         if(mailFolder->GetSelection() == 0) {
             if (database->messagesAvailable()){
                 database->receiveCaptions(rsa);
+                //Send Notification
+                for(int i = oldcount; i < database->getCurrentCaptionCount(); i++){
+                    if(database->getRead(i) == false){
+                        wxNotificationMessage notif(L"Nachricht erhalten", std::wstring(L"Sie haben eine Nachricht von " + database->getUsername(rsa, database->getMailCaptions().at(i).From) + L" erhalten."));
+                        notif.Show(0);
+                    }
+                }
                 UpdateInboxListBox(-1);
             }
         } else if (mailFolder->GetSelection() == 1){
@@ -437,6 +446,9 @@ void MyFrame::OnMailSyncTimer(wxTimerEvent& event) {
         }
     } else {
         this->mailTimer->Stop();
+        wxMessageBox(L"Die Verbindung zur Datenbank konnte nicht aufrecht erhalten werden. Sie wurden abgemeldet.", L"Verbindungsabbruch", wxOK);
+        wxCommandEvent event(wxEVT_MENU, ID_Disconnect);
+        wxQueueEvent(this, event.Clone());
     }
     if(inboxListBox->GetSelection() == -1){
         mailText->SetPage("");
