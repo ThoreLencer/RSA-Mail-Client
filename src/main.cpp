@@ -39,6 +39,8 @@
 //TODO
 //Kontaktbuch
 //Rechtsklick Kontextmenü: Löschen, Antworten, Weiterleiten
+//Frame TAB-Order
+//Zeilenumbruch im Nachrichtenpanel(\n durch <br> ersetzen)
 
 class MyApp : public wxApp {
     wxLocale m_locale;
