@@ -44,7 +44,14 @@ WaitThread::~WaitThread(){}
 MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxID_ANY, "RSA Mail Client") {
     this->database = database;
     this->rsa = rsa;
-    this->SetIcon(icon_xmp);
+
+
+    #if defined(__WXMSW__)
+        this->SetIcon(wxICON(progicon));
+    #else
+        this->SetIcon(icon_xmp);
+    #endif
+
     wxFont myFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     //Description of the GUI
     wxMenu *menuKey = new wxMenu;
