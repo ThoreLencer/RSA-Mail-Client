@@ -458,6 +458,12 @@ void MyFrame::OnMailFolderChanged(wxCommandEvent& event){
     UpdateInboxListBox(-1);
 }
 
+std::wstring addHTMLBrNewLn(std::wstring input){
+    std::wstring output = std::regex_replace(input, std::wregex(L"\n"), L"<br>");
+
+    return output;
+}
+
 
 void MyFrame::OnMailSelected(wxCommandEvent& event){
     if (mailFolder->GetSelection() == 0){
@@ -465,7 +471,7 @@ void MyFrame::OnMailSelected(wxCommandEvent& event){
         //Display selected Mail
         wxSystemSettings settings;
         wxColour color = settings.GetColour(wxSYS_COLOUR_LISTBOXTEXT);
-        mailText->SetPage("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+">"+database->receiveMail(rsa, inboxListBox->GetSelection())+"</font>");
+        mailText->SetPage("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+">"+addHTMLBrNewLn(database->receiveMail(rsa, inboxListBox->GetSelection()))+"</font>");
         color = settings.GetColour(wxSYS_COLOUR_WINDOW);
         mailText->SetBackgroundColour(color);
         //Gelesen markieren
@@ -484,7 +490,7 @@ void MyFrame::OnMailSelected(wxCommandEvent& event){
             //Display Mail
             wxSystemSettings settings;
             wxColour color = settings.GetColour(wxSYS_COLOUR_LISTBOXTEXT);
-            mailText->SetPage("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+">"+database->receiveSentMail(rsa, inboxListBox->GetSelection())+"</font>");
+            mailText->SetPage("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+">"+addHTMLBrNewLn(database->receiveSentMail(rsa, inboxListBox->GetSelection()))+"</font>");
             color = settings.GetColour(wxSYS_COLOUR_WINDOW);
             mailText->SetBackgroundColour(color);
             if(database->getSentRead(inboxListBox->GetSelection())){
