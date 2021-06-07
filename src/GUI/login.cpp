@@ -144,11 +144,8 @@ LoginFrame::LoginFrame(Mail_Database* database, RSA_Encryptor* rsa, wxEvtHandler
     this->database = database;
     this->rsa = rsa;
     this->mainFrameHandler = mainFrame;
-    #if defined(__WXMSW__)
-        this->SetIcon(wxICON(progicon));
-    #else
-        this->SetIcon(icon_xmp);
-    #endif
+   
+    this->SetIcon(icon_xmp);
     wxFont myFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     //Description of the GUI
     //Panel for TAB Order working

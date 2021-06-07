@@ -39,6 +39,7 @@
 //TODO
 //Kontaktbuch
 //Rechtsklick Kontextmenü: Löschen, Antworten, Weiterleiten
+//Replace some MessageBoxes with Notifications
 
 class MyApp : public wxApp {
     wxLocale m_locale;
