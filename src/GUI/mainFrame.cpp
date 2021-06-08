@@ -399,7 +399,9 @@ void MainFrame::OnPerformUpdate(wxCommandEvent& event){
 
 void MainFrame::OnUpdateFinish(wxThreadEvent& event){
     waitThread->Delete();
+    wxYield();
     progress->Close();
+    progress->Destroy();
     wxYield();
     wxMessageBox(L"Das Update wurde erfolgreich durchgeführt. Das Programm muss nun neu gestartet werden.", "Update", wxOK);
     wxYield();
