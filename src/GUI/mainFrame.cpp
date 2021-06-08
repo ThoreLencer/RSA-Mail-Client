@@ -442,6 +442,7 @@ void MailViewWidget::OnEraseBgEvent(wxEraseEvent& event)
     wxSystemSettings settings;
     wxColour color = settings.GetColour(wxSYS_COLOUR_WINDOW);
     this->SetBackgroundColour(color);
+    event.Skip(true);
 }
 
 //RegisterThread

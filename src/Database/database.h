@@ -27,7 +27,7 @@
 #include "../Secure/secure.h"
 
 
-#define CLIENT_VERSION 18
+#define CLIENT_VERSION 19
 
 struct Mail_Caption{
     int ID;
