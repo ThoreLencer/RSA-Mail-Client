@@ -7,7 +7,9 @@
 #include "register.h"
 #include "../define.h"
 #include "../Icon.xpm.h"
+#include "taskbarIcon.h"
 #include <wx/notifmsg.h>
+#include <wx/taskbar.h>
 #include <regex>
 
 class WaitThread;
@@ -16,29 +18,20 @@ class RegisterThread;
 
 class MyFrame : public wxFrame {
 public:
-    MyFrame(Mail_Database* database, RSA_Encryptor* rsa);
-    ~MyFrame();
+    MyFrame();
+private:
+    RSA_Encryptor* rsa;
+    Mail_Database* database;
+    WaitThread *CreateWaitThread();
+    WaitThread* waitThread;
+    wxProgressDialog* progress;
+    TBIcon* tbIcon;
     wxTimer* mailTimer;
     wxSimpleHtmlListBox* inboxListBox;
     wxHtmlWindow* mailText;
     wxStaticText* senderText;
     wxStaticText* accountText;
     wxChoice* mailFolder;
-
-    void performUpdate(wxCommandEvent& event);
-
-
-    WaitThread *CreateWaitThread();
-    WaitThread* waitThread;
-
-
-    LoginFrame *loginframe;
-    RegisterFrame* registerframe;
-    MailWriterFrame* writerframe;
-    wxProgressDialog* progress;
-private:
-    RSA_Encryptor* rsa;
-    Mail_Database* database;
 
     void OnGenKeys(wxCommandEvent& event);
     void OnConnect(wxCommandEvent& event);
@@ -61,6 +54,8 @@ private:
     void OnInboxContextMenu(wxContextMenuEvent& event);
     void OnContextMenuSelected(wxCommandEvent& event);
     void OnExit(wxCommandEvent& event);
+    void OnMinimize(wxCommandEvent& event);
+    void performUpdate(wxCommandEvent& event); 
 
     UpdateThread *CreateUpdateThread();
     RegisterThread *CreateRegisterThread();

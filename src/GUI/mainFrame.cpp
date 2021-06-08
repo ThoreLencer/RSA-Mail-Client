@@ -41,10 +41,13 @@ RegisterThread::~RegisterThread(){}
 
 WaitThread::~WaitThread(){}
 
-MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxID_ANY, "RSA Mail Client") {
-    this->database = database;
-    this->rsa = rsa;
+MyFrame::MyFrame(): wxFrame(NULL, wxID_ANY, "RSA Mail Client") {
 
+    rsa = new RSA_Encryptor;
+    database = new Mail_Database;
+
+    database->init();
+    rsa->init();
     this->SetIcon(icon_xmp);
 
     wxFont myFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
@@ -52,6 +55,9 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
 
     wxMenu *menuKey = new wxMenu;
     menuKey->Append(ID_GenKeys, L"rsa-Test", L"Führt den RSA-Test aus!");
+    wxMenu* menuProgram = new wxMenu;
+    menuProgram->Append(ID_Minimize, L"&Minimieren", "Minimiert das Programm und fügt es der Taskleiste an.");
+    menuProgram->Append(wxID_EXIT, L"&Beenden", "Beendet das Programm.");
     wxMenu *menuConnect = new wxMenu;
     menuConnect->Append(ID_Connect, L"&Anmelden", "Stellt die Verbindung zum Mail-Server her.");
     menuConnect->Append(ID_Registration, L"&Registrieren", "Erstellt ein neues Benutzerkonto.");
@@ -62,6 +68,7 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
     menuMessage->Append(ID_Write_Mail, L"&Schreiben", "Eine Nachricht schreiben.");
     menuMessage->Append(ID_Delete_Mail, L"&Löschen", "Aktuelle Nachricht löschen.");
     wxMenuBar *menuBar = new wxMenuBar;
+    menuBar->Append(menuProgram, L"&Programm");
     menuBar->Append(menuConnect, L"&Account");
     menuBar->Append(menuMessage, L"&Nachricht");
     menuBar->Append(menuKey, L"&Schlüssel");
@@ -122,6 +129,7 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
     Bind(wxEVT_MENU, &MyFrame::OnDeleteMail, this, ID_Delete_Mail);
     Bind(wxEVT_MENU, &MyFrame::OnDeleteAccount, this, ID_Delete);
     Bind(wxEVT_MENU, &MyFrame::OnGetData, this, ID_Data_Get);
+    Bind(wxEVT_MENU, &MyFrame::OnMinimize, this, ID_Minimize);
     Bind(wxEVT_MENU, &MyFrame::OnExit, this, wxID_EXIT);
 
     Bind(EVT_COMMAND_PERFORMUPDATE, &MyFrame::performUpdate, this);
@@ -136,14 +144,8 @@ MyFrame::MyFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxI
 }
 
 void MyFrame::OnExit(wxCommandEvent& event){
+    this->Disconnect(ID_Timer_Mail_Sync, wxEVT_TIMER, wxTimerEventHandler(MyFrame::OnMailSyncTimer), NULL, this);
     Close(true);
-}
-
-MyFrame::~MyFrame(){
-    delete waitThread;
-    delete loginframe;
-    delete registerframe;
-    delete writerframe;
 }
 
 WaitThread *MyFrame::CreateWaitThread()
@@ -179,6 +181,12 @@ RegisterThread *MyFrame::CreateRegisterThread(){
     }
 
     return thread;
+}
+
+void MyFrame::OnMinimize(wxCommandEvent& event){
+    tbIcon = new TBIcon(this);
+    //Hide Frame
+    this->Show(false);
 }
 
 void MyFrame::performUpdate(wxCommandEvent& event){
@@ -284,7 +292,7 @@ void MyFrame::OnGenKeys(wxCommandEvent& event) {
 
 void MyFrame::OnConnect(wxCommandEvent& event) {
     // Login Dialog
-    loginframe = new LoginFrame(database, rsa, this);
+    LoginFrame* loginframe = new LoginFrame(database, rsa, this);
     wxSize size;
     size.x = 500;
     size.y = 230;
@@ -295,7 +303,7 @@ void MyFrame::OnConnect(wxCommandEvent& event) {
 
 void MyFrame::OnRegister(wxCommandEvent& event) {
     //Register Dialog
-    registerframe = new RegisterFrame(database, rsa, this);
+    RegisterFrame* registerframe = new RegisterFrame(database, rsa, this);
     wxSize size;
     size.x = 500;
     size.y = 250;
@@ -320,7 +328,7 @@ void MyFrame::OnDisconnect(wxCommandEvent& event){
 void MyFrame::OnWriteMail(wxCommandEvent& event){
     if(database->isConnected()){
         //Mail Writer Dialog
-        writerframe = new MailWriterFrame(database, rsa);
+        MailWriterFrame* writerframe = new MailWriterFrame(database, rsa);
         wxSize size;
         size.x = 800;
         size.y = 500;

@@ -11,7 +11,7 @@
             "program": "${fileDirname}/../buildLinux/RSA_Client",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${fileDirname}",
+            "cwd": "${fileDirname}/../buildLinux",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
