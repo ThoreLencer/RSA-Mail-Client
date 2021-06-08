@@ -1,88 +1,19 @@
 #pragma once
 #include <wx/wx.h>
+#include <wx/event.h>
+#include <wx/html/htmlproc.h>
+#include <wx/html/htmlwin.h>
 #include <wx/htmllbox.h>
-#include <wx/progdlg.h>
-#include "login.h"
-#include "mailwriter.h"
-#include "register.h"
-#include "../define.h"
-#include "../Icon.xpm.h"
-#include "taskbarIcon.h"
 #include <wx/notifmsg.h>
-#include <wx/taskbar.h>
+#include "../Database/database.h"
+#include "taskbarIcon.h"
+#include "../Encryptor/rsa_encryption.h"
+#include "../Icon.xpm.h"
+#include "../define.h"
+#include "login.h"
+#include "register.h"
+#include "mailwriter.h"
 #include <regex>
-
-class WaitThread;
-class UpdateThread;
-class RegisterThread;
-
-class MyFrame : public wxFrame {
-public:
-    MyFrame();
-private:
-    RSA_Encryptor* rsa;
-    Mail_Database* database;
-    WaitThread *CreateWaitThread();
-    WaitThread* waitThread;
-    wxProgressDialog* progress;
-    TBIcon* tbIcon;
-    wxTimer* mailTimer;
-    wxSimpleHtmlListBox* inboxListBox;
-    wxHtmlWindow* mailText;
-    wxStaticText* senderText;
-    wxStaticText* accountText;
-    wxChoice* mailFolder;
-
-    void OnGenKeys(wxCommandEvent& event);
-    void OnConnect(wxCommandEvent& event);
-    void OnRegister(wxCommandEvent& event);
-    void OnDisconnect(wxCommandEvent& event);
-    void OnMailSyncTimer(wxTimerEvent& event);
-    void OnMailSelected(wxCommandEvent& event);
-    void OnWriteMail(wxCommandEvent& event);
-    void OnUpdateFinish(wxThreadEvent& event);
-    void OnRegisterFinish(wxThreadEvent& event);
-    void OnPulseProgress(wxThreadEvent& event);
-    void OnMailFolderChanged(wxCommandEvent& event);
-    void OnDeleteMail(wxCommandEvent& event);
-    void OnDeleteAccount(wxCommandEvent& event);
-    void OnGetData(wxCommandEvent& event);
-    void OnClearMailView(wxCommandEvent& event);
-    void OnLoggedIn(wxCommandEvent& event);
-    void UpdateInboxListBox(int selection);
-    void OnPerformRegister(wxCommandEvent& event);
-    void OnInboxContextMenu(wxContextMenuEvent& event);
-    void OnContextMenuSelected(wxCommandEvent& event);
-    void OnExit(wxCommandEvent& event);
-    void OnMinimize(wxCommandEvent& event);
-    void performUpdate(wxCommandEvent& event); 
-
-    UpdateThread *CreateUpdateThread();
-    RegisterThread *CreateRegisterThread();
-    wxDECLARE_EVENT_TABLE();
-};
-
-class WaitThread
-  : public wxThread
-{
-public:
-  WaitThread(wxEvtHandler* frame){
-      this->evtHandler = frame;
-  }
-  ~WaitThread();
-private:
-  wxEvtHandler* evtHandler;
-protected:
-  virtual ExitCode Entry()
-  {
-    while(!TestDestroy()) {
-        wxThreadEvent event(wxEVT_THREAD, PULSE_PROGRESS);
-        wxQueueEvent(evtHandler, event.Clone());
-        Sleep(150);
-    }
-    return static_cast<ExitCode>(NULL);
-  }
-};
 
 class UpdateThread : public wxThread
 {
@@ -93,7 +24,6 @@ public:
     }
 
     virtual ExitCode Entry();
-    ~UpdateThread();
 
 private:
     wxEvtHandler *evtHandler;
@@ -109,9 +39,99 @@ public:
     }
 
     virtual ExitCode Entry();
-    ~RegisterThread();
 
 private:
     wxEvtHandler *evtHandler;
     RSA_Encryptor* rsa;
+};
+
+class WaitThread
+  : public wxThread
+{
+public:
+  WaitThread(wxEvtHandler* frame){
+      this->evtHandler = frame;
+  }
+private:
+  wxEvtHandler* evtHandler;
+protected:
+  virtual ExitCode Entry()
+  {
+    while(!TestDestroy()) {
+        wxThreadEvent event(wxEVT_THREAD, PULSE_PROGRESS);
+        wxQueueEvent(evtHandler, event.Clone());
+        Sleep(150);
+    }
+    return static_cast<ExitCode>(NULL);
+  }
+};
+
+class MailViewWidget : public wxHtmlWindow {
+  public:
+    MailViewWidget(wxWindow *parent) : wxHtmlWindow( parent )
+    {
+    }
+  private:
+    void OnEraseBgEvent(wxEraseEvent& event);
+    wxDECLARE_EVENT_TABLE();
+    wxDECLARE_NO_COPY_CLASS(MailViewWidget);
+};
+
+class InboxWidget : public wxSimpleHtmlListBox {
+    public:
+        InboxWidget(wxWindow* parent, wxWindowID id) : wxSimpleHtmlListBox(parent, id){
+
+        }
+    private:
+        void OnInboxContextMenu(wxContextMenuEvent& event);
+        wxDECLARE_EVENT_TABLE();
+        wxDECLARE_NO_COPY_CLASS(InboxWidget);
+};
+
+class MainFrame : public wxFrame {
+public:
+    MainFrame();
+private:
+
+    RSA_Encryptor* rsa;
+    Mail_Database* database;
+    MailViewWidget* mailText;
+    InboxWidget* inboxListBox;
+    wxChoice* mailFolder;
+    wxStaticText* senderText;
+    wxStaticText* accountText;
+    wxTimer* mailTimer;
+    wxProgressDialog* progress;
+    WaitThread* waitThread;
+
+    void OnExit(wxCommandEvent& event);
+    void OnMinimize(wxCommandEvent& event);
+    void OnLogin(wxCommandEvent& event);
+    void OnLoggedIn(wxCommandEvent& event);
+    void OnSyncMails(wxTimerEvent& event);
+    void UpdateInboxListBox(int selection);
+    void OnMailFolderChanged(wxCommandEvent& event);
+    void OnMailSelected(wxCommandEvent& event);
+    void OnRegister(wxCommandEvent& event);
+    void OnPerformRegister(wxCommandEvent& event);
+    void OnRegisterFinish(wxThreadEvent& event);
+    void OnPulseProgress(wxThreadEvent& event);
+    void OnLogout(wxCommandEvent& event);
+    void OnDeleteAccount(wxCommandEvent& event);
+    void OnGetData(wxCommandEvent& event);
+    void OnWriteMail(wxCommandEvent& event);
+    void OnDeleteMail(wxCommandEvent& event);
+    void OnInboxContextMenu(wxContextMenuEvent& event);
+    void OnContextMenuSelected(wxCommandEvent& event);
+    void OnClearMailView(wxCommandEvent& event);
+    void OnPerformUpdate(wxCommandEvent& event); 
+    void OnUpdateFinish(wxThreadEvent& event);
+    void OnClose(wxCloseEvent& event);
+    void OnCheckUpdate(wxCommandEvent& event);
+
+    RegisterThread *CreateRegisterThread();
+    WaitThread *CreateWaitThread();
+    UpdateThread *CreateUpdateThread();
+
+    wxDECLARE_EVENT_TABLE();
 };

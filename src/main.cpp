@@ -39,10 +39,15 @@
 //TODO
 //Kontaktbuch
 //Rechtsklick Kontextmenü: Löschen, Antworten, Weiterleiten
-//Replace some MessageBoxes with Notifications
+
+wxDEFINE_EVENT(EVT_COMMAND_CLEARMAILVIEW, wxCommandEvent);
+wxDEFINE_EVENT(EVT_COMMAND_LOGGEDIN, wxCommandEvent);
+wxDEFINE_EVENT(EVT_COMMAND_PERFORMUPDATE, wxCommandEvent);
+wxDEFINE_EVENT(EVT_COMMAND_REGISTER, wxCommandEvent);
 
 class MyApp : public wxApp {
-    wxLocale m_locale;
+private:
+    wxLocale* m_locale;
 public:
     virtual bool OnInit();
 };
@@ -58,8 +63,8 @@ bool MyApp::OnInit() {
     //Delete old Updatefiles
     deleteOld();
     //Init Application
-    m_locale.Init(m_locale.GetSystemLanguage(), wxLOCALE_LOAD_DEFAULT);
-    MyFrame *frame = new MyFrame();
+    m_locale = new wxLocale(m_locale->GetSystemLanguage(), wxLOCALE_LOAD_DEFAULT);
+    MainFrame *frame = new MainFrame();
     wxSize size;
     size.x = 800;
     size.y = 500;
