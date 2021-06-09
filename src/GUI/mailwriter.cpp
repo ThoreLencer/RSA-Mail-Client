@@ -39,18 +39,23 @@ MailWriterFrame::MailWriterFrame(Mail_Database* database, RSA_Encryptor* rsa): w
 void MailWriterFrame::OnSend(wxCommandEvent& event) {
     // Check if Boxes are filled
     if (captionEdit->GetValue() != "" && toEdit->GetValue() != ""){
+        PopupDialog* serverPopup = new PopupDialog(L"Nachricht Senden", L"Sende Nachricht... Bitte warten.", this);
+        wxYield(); 
         //Check if Receiver exists
         if (std::wstring(mailEdit->GetValue().c_str()).length() < 50000){
             std::string recv = std::string(toEdit->GetValue().c_str());
             int recvID = database->userExists(rsa, recv);
             if(recvID > -1){
                 database->sendMail(rsa, recvID, std::wstring(captionEdit->GetValue().c_str()), std::wstring(mailEdit->GetValue().c_str()), database->userKey(rsa, recv));
+                serverPopup->Close();
                 wxMessageBox(L"Die Nachricht wurde versandt!", "Nachricht schreiben", wxOK, this);
                 this->Close();
             } else {
+                serverPopup->Close();
                 wxMessageBox(L"Der angegebene Empfänger konnte nicht gefunden werden!", "Fehler", wxOK, this);
             }
         } else {
+            serverPopup->Close();
             wxMessageBox(L"Sie haben die maximale Zeichenanzahl von 50000 überschritten. Bitte halten Sie sich etwas kürzer.", "Fehler", wxOK, this);
         }
 

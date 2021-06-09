@@ -4,6 +4,8 @@
 #include "../Encryptor/rsa_encryption.h"
 #include "../define.h"
 #include "../Icon.xpm.h"
+#include <wx/busyinfo.h>
+#include "popupDialog.h"
 
 wxDECLARE_EVENT(EVT_COMMAND_CLEARMAILVIEW, wxCommandEvent);
 wxDECLARE_EVENT(EVT_COMMAND_LOGGEDIN, wxCommandEvent);
@@ -16,6 +18,7 @@ private:
     Mail_Database* database;
     RSA_Encryptor* rsa;
     wxEvtHandler* mainFrameHandler;
+    wxProgressDialog* progress;
 
     wxTextCtrl* ipEdit;
     wxTextCtrl* usernameEdit;

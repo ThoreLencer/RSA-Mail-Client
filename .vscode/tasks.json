@@ -5,7 +5,7 @@
             "label": "LinuxBuild",
             "command": "/usr/bin/g++",
             "args": [
-                //"-g",
+                "-g",
                 "main.cpp",
                 "GUI/mainFrame.cpp",
                 "Encryptor/rsa_encryption.cpp",
@@ -14,6 +14,7 @@
                 "GUI/mailwriter.cpp",
                 "GUI/register.cpp",
                 "GUI/taskbarIcon.cpp",
+                "GUI/popupDialog.cpp",
                 "-o",
                 "../buildLinux/RSA_Client",
                 //INCLUDES
@@ -140,6 +141,7 @@
                 "GUI/mailwriter.cpp",
                 "GUI/register.cpp",
                 "GUI/taskbarIcon.cpp",
+                "GUI/popupDialog.cpp",
                 "-o",
                 "../buildWin/RSA_Client.exe",
                 "resource.o",

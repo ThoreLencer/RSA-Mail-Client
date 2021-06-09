@@ -2,6 +2,8 @@
 
 void LoginFrame::OnLogin(wxCommandEvent& event) {  
     if (this->ipEdit->GetValue() != "" && this->usernameEdit->GetValue() != "" && this->passwordEdit->GetValue() != ""){
+        PopupDialog* serverPopup = new PopupDialog(L"Anmeldung", L"Melde an... Bitte warten.", this);
+        wxYield(); 
         if (database->isConnected()){
             wxThreadEvent event(EVT_COMMAND_CLEARMAILVIEW, ID_EVT_CLEARMAILVIEW);
             wxQueueEvent(mainFrameHandler, event.Clone());
@@ -12,6 +14,7 @@ void LoginFrame::OnLogin(wxCommandEvent& event) {
         if (database->connect(std::string(ipEdit->GetValue().c_str()))){
             if(database->versionValid()){
                 if (database->userExists(rsa)){
+                    serverPopup->Close();
                     // Load Keys
                     rsa->loadPrivKey(std::string(database->getUsername() + ".key"));
                     rsa->setE(database->getE(rsa));
@@ -30,18 +33,22 @@ void LoginFrame::OnLogin(wxCommandEvent& event) {
                         }
                     }
                 } else {
+                    serverPopup->Close();
                     // User does not exist
                     wxMessageBox(L"Der angegebene Benutzer konnte nicht gefunden werden. Nutzen Sie die Registrierung um ein Benutzerkonto anzulegen.", "Anmeldung", wxOK);
                 }
             } else {
+                serverPopup->Close();
                 if(wxMessageBox(L"Die Version dieses Clients stimmt nicht mit der des Servers überein. Soll die neueste Version jetzt heruntergeladen werden?", "Versionsfehler", wxYES_NO) == wxYES){
                     wxThreadEvent event(EVT_COMMAND_PERFORMUPDATE, ID_EVT_PERFORMUPDATE);
                     wxQueueEvent(mainFrameHandler, event.Clone());
                 }
             }
         } else {
+            serverPopup->Close();
             wxMessageBox("Es konnte keine Verbindung zum Server hergestellt werden!", "Fehler", wxOK);
         }
+
     } else {
         if (this->ipEdit->GetValue() == ""){
             wxMessageBox("Bitte gib eine IP ein!", "Fehler", wxOK, this);
@@ -57,6 +64,8 @@ void LoginFrame::OnLogin(wxCommandEvent& event) {
 
 void LoginFrame::OnPasswordReset(wxCommandEvent& event){
     if (this->ipEdit->GetValue() != "" && this->usernameEdit->GetValue() != ""){
+        PopupDialog* serverPopup = new PopupDialog(L"Passwort zurücksetzen", L"Verbinde zum Server...", this);
+        wxYield();                
         if (database->isConnected()){
             wxThreadEvent event(EVT_COMMAND_CLEARMAILVIEW, ID_EVT_CLEARMAILVIEW);
             wxQueueEvent(mainFrameHandler, event.Clone());
@@ -67,15 +76,19 @@ void LoginFrame::OnPasswordReset(wxCommandEvent& event){
         if (database->connect(std::string(ipEdit->GetValue().c_str()))){
             if(database->versionValid()){
                 if (database->userExists(rsa)){
+                    serverPopup->Close();
                     // Load Keys
                     rsa->loadPrivKey(std::string(database->getUsername() + ".key"));
                     rsa->setE(database->getE(rsa));
                     rsa->setN(database->getN(rsa));
                     //Change Password
                     if (database->hasEmail()){
+                        PopupDialog* emailPopup = new PopupDialog(L"Verifikationsemail", L"Sende Email zur Verifikation...", this);
+                        wxYield();
                         //Email Request
                         int code = database->sendPasswordResetEmail(rsa);
-                        wxMessageBox(L"Es wurde eine Email zur Bestätigung Ihrer Identität verschickt. Bitte geben Sie den dort enthaltenen Bestätigungscode im folgenden Fenster ein.", "Passwort zurücksetzen", wxOK);
+                        emailPopup->Close();
+                        wxMessageBox(L"Es wurde eine Email zur Bestätigung Ihrer Identität verschickt. Bitte geben Sie den dort enthaltenen Bestätigungscode im folgenden Fenster ein.", L"Passwort zurücksetzen", wxOK);
                         //Ask for Code
                         wxTextEntryDialog dlg(this, L"Bitte geben Sie den Bestätigungscode ein.", "Email Verifizierung", "", wxOK | wxCANCEL);
                         if(dlg.ShowModal() == wxID_OK){
@@ -118,16 +131,19 @@ void LoginFrame::OnPasswordReset(wxCommandEvent& event){
                         }
                     }
                 } else {
+                    serverPopup->Close();
                     // User does not exist
                     wxMessageBox(L"Der angegebene Benutzer konnte nicht gefunden werden. Nutzen Sie die Registrierung um ein Benutzerkonto anzulegen.", "Passwort zurücksetzen", wxOK);
                 }
             } else {
+                serverPopup->Close();
                 if(wxMessageBox(L"Die Version dieses Clients stimmt nicht mit der des Servers überein. Soll die neueste Version jetzt heruntergeladen werden?", "Versionsfehler", wxYES_NO) == wxYES){
                     wxThreadEvent event(EVT_COMMAND_PERFORMUPDATE, ID_EVT_PERFORMUPDATE);
                     wxQueueEvent(mainFrameHandler, event.Clone());
                 }
             }
         } else {
+            serverPopup->Close();
             wxMessageBox("Es konnte keine Verbindung zum Server hergestellt werden!", "Passwort zurücksetzen", wxOK);
         }
     } else {

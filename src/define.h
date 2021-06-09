@@ -1,6 +1,7 @@
 #pragma once
 #include <wx/wx.h>
 #include <wx/thread.h>
+#include <wx/progdlg.h>
 
 enum {
     ID_EVT_CLEARMAILVIEW,

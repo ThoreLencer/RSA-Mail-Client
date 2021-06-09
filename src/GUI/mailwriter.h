@@ -5,6 +5,7 @@
 #include <wx/richtext/richtextctrl.h>
 #include "../define.h"
 #include "../Icon.xpm.h"
+#include "popupDialog.h"
 
 class MailWriterFrame : public wxFrame {
 public:

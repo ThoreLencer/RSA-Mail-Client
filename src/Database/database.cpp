@@ -3,6 +3,12 @@
 
 #include "database.h"
 
+Mail_Database::~Mail_Database(){
+    if (isConnected()){
+        this->close();
+    }
+}
+
 bool Mail_Database::connect(std::string ip){
 
     mysql = mysql_init(NULL);
@@ -724,6 +730,7 @@ bool Mail_Database::hasEmail(){
 
 int Mail_Database::sendPasswordResetEmail(RSA_Encryptor* rsa){
     int randomCode;
+    srand(time(NULL));
     randomCode = rand() % 9999999 + 1000000;
     //Get Email Adress
     if (mysql_query(mysql, std::string("SELECT `Email` FROM `Users` WHERE `ID`=" + std::to_string(account_id)).c_str())) {
@@ -756,6 +763,7 @@ int Mail_Database::sendPasswordResetEmail(RSA_Encryptor* rsa){
 
 int Mail_Database::sendVerificationEmail(RSA_Encryptor* rsa, std::string emailAdress){
     int randomCode;
+    srand(time(NULL));
     randomCode = rand() % 9999999 + 1000000;
     //Send Email
     quickmail_initialize();

@@ -45,11 +45,11 @@ private:
     RSA_Encryptor* rsa;
 };
 
-class WaitThread
+class PulseThread
   : public wxThread
 {
 public:
-  WaitThread(wxEvtHandler* frame){
+  PulseThread(wxEvtHandler* frame){
       this->evtHandler = frame;
   }
 private:
@@ -102,7 +102,7 @@ private:
     wxStaticText* accountText;
     wxTimer* mailTimer;
     wxProgressDialog* progress;
-    WaitThread* waitThread;
+    PulseThread* pulseThread;
 
     void OnExit(wxCommandEvent& event);
     void OnMinimize(wxCommandEvent& event);
@@ -130,7 +130,7 @@ private:
     void OnCheckUpdate(wxCommandEvent& event);
 
     RegisterThread *CreateRegisterThread();
-    WaitThread *CreateWaitThread();
+    PulseThread *CreatePulseThread();
     UpdateThread *CreateUpdateThread();
 
     wxDECLARE_EVENT_TABLE();

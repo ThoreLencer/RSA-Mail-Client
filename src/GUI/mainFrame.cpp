@@ -274,12 +274,12 @@ void MainFrame::OnPerformRegister(wxCommandEvent& event){
     wxYield();
     RegisterThread* thread = CreateRegisterThread();
     thread->Run();
-    waitThread = CreateWaitThread();
-    waitThread->Run();
+    pulseThread = CreatePulseThread();
+    pulseThread->Run();
 }
 
 void MainFrame::OnRegisterFinish(wxThreadEvent& event){
-    waitThread->Delete();
+    pulseThread->Delete();
     progress->Close();
     progress->Destroy();
     if(!rsa->verifyKey()){
@@ -393,12 +393,12 @@ void MainFrame::OnPerformUpdate(wxCommandEvent& event){
     progress->Show();
     UpdateThread* thread = CreateUpdateThread();
     thread->Run();
-    waitThread = CreateWaitThread();
-    waitThread->Run();
+    pulseThread = CreatePulseThread();
+    pulseThread->Run();
 }
 
 void MainFrame::OnUpdateFinish(wxThreadEvent& event){
-    waitThread->Delete();
+    pulseThread->Delete();
     wxYield();
     progress->Close();
     progress->Destroy();
@@ -470,9 +470,9 @@ wxThread::ExitCode RegisterThread::Entry(){
 
 //WaitThread
 
-WaitThread *MainFrame::CreateWaitThread()
+PulseThread *MainFrame::CreatePulseThread()
 {
-    WaitThread *thread = new WaitThread(this);
+    PulseThread *thread = new PulseThread(this);
 
     if ( thread->Create() != wxTHREAD_NO_ERROR )
     {

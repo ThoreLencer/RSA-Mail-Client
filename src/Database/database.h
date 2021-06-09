@@ -54,6 +54,7 @@ class Mail_Database {
         RSA_Pub_Key pubNameKey;
         RSA_Priv_Key privNameKey;
     public:
+        ~Mail_Database();
         void init();
         void setLoginInfo(std::string username, std::wstring password);
         bool connect(std::string ip);
