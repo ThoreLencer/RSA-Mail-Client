@@ -15,9 +15,8 @@ PopupDialog::PopupDialog(std::wstring title, std::wstring message, wxWindow* par
     SetSizer(box1);
     CenterOnParent();
     Show(true);
-    wxYield();
 }
 
 void PopupDialog::Close(){
-    Destroy();
+    this->Destroy();
 }

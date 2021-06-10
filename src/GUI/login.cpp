@@ -1,54 +1,98 @@
 #include "login.h"
 
-void LoginFrame::OnLogin(wxCommandEvent& event) {  
-    if (this->ipEdit->GetValue() != "" && this->usernameEdit->GetValue() != "" && this->passwordEdit->GetValue() != ""){
-        PopupDialog* serverPopup = new PopupDialog(L"Anmeldung", L"Melde an... Bitte warten.", this);
-        wxYield(); 
-        if (database->isConnected()){
-            wxThreadEvent event(EVT_COMMAND_CLEARMAILVIEW, ID_EVT_CLEARMAILVIEW);
-            wxQueueEvent(mainFrameHandler, event.Clone());
-            database->close();
-        }
-        database->setLoginInfo(std::string(this->usernameEdit->GetValue().c_str()), std::wstring(this->passwordEdit->GetValue().c_str()));
-        
-        if (database->connect(std::string(ipEdit->GetValue().c_str()))){
+enum {
+    ID_Version_Invalid,
+    ID_User_Nonexist,
+    ID_Server_Unreachable,
+    ID_Password_Wrong,
+    ID_Login_Successful,
+    ID_Update_Required
+};
+
+wxDEFINE_EVENT(EVT_COMMAND_LOGIN_FINISH, wxCommandEvent);
+
+wxThread::ExitCode LoginThread::Entry(){
+        if (database->connect(ip)){
             if(database->versionValid()){
                 if (database->userExists(rsa)){
-                    serverPopup->Close();
                     // Load Keys
                     rsa->loadPrivKey(std::string(database->getUsername() + ".key"));
                     rsa->setE(database->getE(rsa));
                     rsa->setN(database->getN(rsa));
                     //Check password
                     if(database->passwordValid(rsa)){
-                        wxMessageBox("Die Anmeldung ist erfolgreich.", "Anmeldung", wxOK);
-                        wxThreadEvent event(EVT_COMMAND_LOGGEDIN, ID_EVT_LOGGEDIN);
-                        wxQueueEvent(mainFrameHandler, event.Clone());
-
-                        this->Close();
+                        wxCommandEvent event(EVT_COMMAND_LOGIN_FINISH, ID_Login_Successful);
+                        wxQueueEvent(evtHandler, event.Clone());
                     } else {
-                        wxMessageBox("Das eingegebene Passwort ist falsch. Probieren Sie es nocheinmal.", "Anmeldung", wxOK);
-                        if (database->isConnected()){
-                            database->close();
-                        }
+                        wxCommandEvent event(EVT_COMMAND_LOGIN_FINISH, ID_Password_Wrong);
+                        wxQueueEvent(evtHandler, event.Clone());
                     }
                 } else {
-                    serverPopup->Close();
-                    // User does not exist
-                    wxMessageBox(L"Der angegebene Benutzer konnte nicht gefunden werden. Nutzen Sie die Registrierung um ein Benutzerkonto anzulegen.", "Anmeldung", wxOK);
+                    wxCommandEvent event(EVT_COMMAND_LOGIN_FINISH, ID_User_Nonexist);
+                    wxQueueEvent(evtHandler, event.Clone());
                 }
             } else {
-                serverPopup->Close();
-                if(wxMessageBox(L"Die Version dieses Clients stimmt nicht mit der des Servers überein. Soll die neueste Version jetzt heruntergeladen werden?", "Versionsfehler", wxYES_NO) == wxYES){
-                    wxThreadEvent event(EVT_COMMAND_PERFORMUPDATE, ID_EVT_PERFORMUPDATE);
-                    wxQueueEvent(mainFrameHandler, event.Clone());
-                }
+                wxCommandEvent event(EVT_COMMAND_LOGIN_FINISH, ID_Update_Required);
+                wxQueueEvent(evtHandler, event.Clone());
             }
         } else {
-            serverPopup->Close();
-            wxMessageBox("Es konnte keine Verbindung zum Server hergestellt werden!", "Fehler", wxOK);
+            wxCommandEvent event(EVT_COMMAND_LOGIN_FINISH, ID_Server_Unreachable);
+            wxQueueEvent(evtHandler, event.Clone());
         }
+        return static_cast<wxThread::ExitCode>(NULL); 
+}
 
+void LoginFrame::OnLoginFinished(wxCommandEvent& event){
+    if(event.GetId() == ID_Login_Successful){
+        loginPopup->Close();
+        wxMessageBox("Die Anmeldung ist erfolgreich.", "Anmeldung", wxOK);
+        wxThreadEvent event(EVT_COMMAND_LOGGEDIN, ID_EVT_LOGGEDIN);
+        wxQueueEvent(mainFrameHandler, event.Clone());
+
+        this->Close();
+    }
+    if(event.GetId() == ID_Password_Wrong){
+        loginPopup->Close();
+        wxMessageBox("Das eingegebene Passwort ist falsch. Probieren Sie es nocheinmal.", "Anmeldung", wxOK);
+        if (database->isConnected()){
+            database->close();
+        }
+    }
+    if(event.GetId() == ID_User_Nonexist){
+        loginPopup->Close();
+        // User does not exist
+        wxMessageBox(L"Der angegebene Benutzer konnte nicht gefunden werden. Nutzen Sie die Registrierung um ein Benutzerkonto anzulegen.", "Anmeldung", wxOK);     
+    }
+
+    if(event.GetId() == ID_Update_Required){
+        loginPopup->Close();
+        if(wxMessageBox(L"Die Version dieses Clients stimmt nicht mit der des Servers überein. Soll die neueste Version jetzt heruntergeladen werden?", "Versionsfehler", wxYES_NO) == wxYES){
+            wxThreadEvent event(EVT_COMMAND_PERFORMUPDATE, ID_EVT_PERFORMUPDATE);
+            wxQueueEvent(mainFrameHandler, event.Clone());
+        }
+    }
+
+    if(event.GetId() == ID_Server_Unreachable){
+        loginPopup->Close();
+        wxMessageBox("Es konnte keine Verbindung zum Server hergestellt werden!", "Fehler", wxOK);
+    }
+    Enable();
+}
+
+void LoginFrame::OnLogin(wxCommandEvent& event) {  
+    if (this->ipEdit->GetValue() != "" && this->usernameEdit->GetValue() != "" && this->passwordEdit->GetValue() != ""){
+        if (database->isConnected()){
+            wxThreadEvent event(EVT_COMMAND_CLEARMAILVIEW, ID_EVT_CLEARMAILVIEW);
+            wxQueueEvent(mainFrameHandler, event.Clone());
+            database->close();
+        }
+        database->setLoginInfo(std::string(this->usernameEdit->GetValue().c_str()), std::wstring(this->passwordEdit->GetValue().c_str()));
+        loginPopup = new PopupDialog(L"Anmeldung", L"Melde an... Bitte warten.", NULL);
+
+        LoginThread *thread = new LoginThread(rsa, this, database, std::string(this->ipEdit->GetValue()));
+        thread->Create();
+        thread->Run(); 
+        Disable();
     } else {
         if (this->ipEdit->GetValue() == ""){
             wxMessageBox("Bitte gib eine IP ein!", "Fehler", wxOK, this);
@@ -156,6 +200,12 @@ void LoginFrame::OnPasswordReset(wxCommandEvent& event){
     }
 }
 
+void LoginFrame::OnClose(wxCloseEvent& event){
+    wxCommandEvent evt(EVT_COMMAND_MAINFRAME_ENABLE, ID_EVT_MAINFRAME_ENABLE);
+    wxQueueEvent(mainFrameHandler, evt.Clone());
+    this->Destroy();
+}
+
 LoginFrame::LoginFrame(Mail_Database* database, RSA_Encryptor* rsa, wxEvtHandler* mainFrame): wxFrame(NULL, wxID_ANY, "Anmelden") {
     this->database = database;
     this->rsa = rsa;
@@ -194,4 +244,6 @@ LoginFrame::LoginFrame(Mail_Database* database, RSA_Encryptor* rsa, wxEvtHandler
     panel->SetSizer(mainSizer);
     Bind(wxEVT_BUTTON, &LoginFrame::OnLogin, this, ID_Button_Login);
     Bind(wxEVT_BUTTON, &LoginFrame::OnPasswordReset, this, ID_Button_PasswdReset);
+    Bind(EVT_COMMAND_LOGIN_FINISH, &LoginFrame::OnLoginFinished, this);
+    Bind(wxEVT_CLOSE_WINDOW, &LoginFrame::OnClose, this);
 }

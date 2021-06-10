@@ -44,7 +44,7 @@ wxDEFINE_EVENT(EVT_COMMAND_CLEARMAILVIEW, wxCommandEvent);
 wxDEFINE_EVENT(EVT_COMMAND_LOGGEDIN, wxCommandEvent);
 wxDEFINE_EVENT(EVT_COMMAND_PERFORMUPDATE, wxCommandEvent);
 wxDEFINE_EVENT(EVT_COMMAND_REGISTER, wxCommandEvent);
-
+wxDEFINE_EVENT(EVT_COMMAND_MAINFRAME_ENABLE, wxCommandEvent);
 class MyApp : public wxApp {
 private:
     wxLocale* m_locale;

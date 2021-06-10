@@ -108,6 +108,7 @@ private:
     void OnMinimize(wxCommandEvent& event);
     void OnLogin(wxCommandEvent& event);
     void OnLoggedIn(wxCommandEvent& event);
+    void OnEnableFrame(wxCommandEvent& event);
     void OnSyncMails(wxTimerEvent& event);
     void UpdateInboxListBox(int selection);
     void OnMailFolderChanged(wxCommandEvent& event);

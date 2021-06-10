@@ -45,6 +45,7 @@ RegisterFrame::RegisterFrame(Mail_Database* database, RSA_Encryptor* rsa, wxEvtH
     mainSizer->Add(registerButton, 0, wxEXPAND);
     panel->SetSizer(mainSizer);
     Bind(wxEVT_BUTTON, &RegisterFrame::OnRegister, this, ID_Button_Register);
+    Bind(wxEVT_CLOSE_WINDOW, &RegisterFrame::OnClose, this);
 }
 
 void RegisterFrame::OnRegister(wxCommandEvent& event){
@@ -130,4 +131,10 @@ void RegisterFrame::OnRegister(wxCommandEvent& event){
             wxMessageBox("Bitte gib das Passwort zur Bestätigung nochmals ein!", "Fehler", wxOK, this);
         }
     }
+}
+
+void RegisterFrame::OnClose(wxCloseEvent& event){
+    wxCommandEvent evt(EVT_COMMAND_MAINFRAME_ENABLE, ID_EVT_MAINFRAME_ENABLE);
+    wxQueueEvent(mainFrameHandler, evt.Clone());
+    this->Destroy();
 }

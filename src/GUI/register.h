@@ -25,4 +25,5 @@ private:
     wxTextCtrl* passwordRepeatEdit;
     wxDialog* tmpDlg;
     void OnRegister(wxCommandEvent& event);
+    void OnClose(wxCloseEvent& event);
 };

@@ -7,6 +7,7 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_MENU(ID_Minimize, MainFrame::OnMinimize)
     EVT_MENU(ID_Login, MainFrame::OnLogin)
     EVT_COMMAND(ID_EVT_LOGGEDIN, EVT_COMMAND_LOGGEDIN, MainFrame::OnLoggedIn)
+    EVT_COMMAND(ID_EVT_MAINFRAME_ENABLE, EVT_COMMAND_MAINFRAME_ENABLE, MainFrame::OnEnableFrame)
     EVT_TIMER(ID_Timer_Mail_Sync, MainFrame::OnSyncMails)
     EVT_CHOICE(ID_Mail_Folder_Change, MainFrame::OnMailFolderChanged)
     EVT_COMMAND(ID_ListBox_Inbox, wxEVT_COMMAND_LISTBOX_SELECTED, MainFrame::OnMailSelected)
@@ -124,12 +125,20 @@ void MainFrame::OnLogin(wxCommandEvent& event){
     loginframe->SetMinSize(size);
     loginframe->SetSize(500, 230);
     loginframe->Show(true);
+
+    Disable();
 }
 
 void MainFrame::OnLoggedIn(wxCommandEvent& event){
     accountText->SetLabelText(std::string("Benutzer: " + database->getUsername()));
     mailTimer->Start(5000, false);
     mailTimer->Notify();
+
+    Enable();
+}
+
+void MainFrame::OnEnableFrame(wxCommandEvent& event){
+    Enable();
 }
 
 void MainFrame::OnSyncMails(wxTimerEvent& event){
@@ -265,6 +274,8 @@ void MainFrame::OnRegister(wxCommandEvent& event) {
     registerframe->SetMinSize(size);
     registerframe->SetSize(500, 250);
     registerframe->Show(true);
+
+    Disable();
 }
 
 void MainFrame::OnPerformRegister(wxCommandEvent& event){
@@ -292,6 +303,7 @@ void MainFrame::OnRegisterFinish(wxThreadEvent& event){
         wxMessageBox("Der Benutzer wurde erfolgreich registriert.", "Registrierung", wxOK);
         mailTimer->Start(5000, false);
     }
+    Enable();
 }
 
 void MainFrame::OnPulseProgress(wxThreadEvent& event){
