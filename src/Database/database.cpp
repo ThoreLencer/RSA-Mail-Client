@@ -861,7 +861,7 @@ std::vector<std::string> Mail_Database::getAttachedFilenames(RSA_Encryptor* rsa,
 }
 
 std::vector<std::string> Mail_Database::getSentAttachedFilenames(RSA_Encryptor* rsa, int ID){
-    if (mysql_query(mysql, std::string("SELECT `AttachInfo` FROM `Messages` WHERE `ID`=" + std::to_string(sent_captions.at(ID).ID)).c_str())) {
+    if (mysql_query(mysql, std::string("SELECT `SenderAttachInfo` FROM `Messages` WHERE `ID`=" + std::to_string(sent_captions.at(ID).ID)).c_str())) {
         std::cout << mysql_error(mysql) << std::endl;
     }
     res = mysql_use_result(mysql);
