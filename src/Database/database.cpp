@@ -565,7 +565,7 @@ void Mail_Database::sendMail(RSA_Encryptor* rsa, int To, std::wstring Caption, s
     }
 
     //Delete ZIP File
-    //remove("attach.zip");
+    remove("attach.zip");
 }
 
 RSA_Pub_Key Mail_Database::userKey(RSA_Encryptor* rsa, int value){
@@ -934,5 +934,5 @@ void Mail_Database::downloadAttachment(RSA_Encryptor* rsa, int ID, std::string d
         entry = zip.GetNextEntry();
     }
 
-    //remove("Attach.zip");
+    remove("Attach.zip");
 }
