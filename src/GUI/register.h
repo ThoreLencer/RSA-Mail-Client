@@ -1,3 +1,6 @@
+// Copyright 2021 Thore Lencer
+// SPDX-License-Identifier: AGPL-3.0-only
+
 #pragma once
 #include <wx/wx.h>
 #include <wx/thread.h>

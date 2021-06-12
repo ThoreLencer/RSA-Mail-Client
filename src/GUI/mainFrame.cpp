@@ -1,3 +1,6 @@
+// Copyright 2021 Thore Lencer
+// SPDX-License-Identifier: AGPL-3.0-only
+
 #include "mainFrame.h"
 
 //MainFrame
@@ -26,6 +29,7 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_THREAD(UPDATE_THREAD_FINISH, MainFrame::OnUpdateFinish)
     EVT_CLOSE(MainFrame::OnClose)
     EVT_MENU(ID_Update, MainFrame::OnCheckUpdate)
+    EVT_COMMAND(ID_Button_Download_Attachment, wxEVT_COMMAND_BUTTON_CLICKED, MainFrame::OnDownloadAttachment)
 wxEND_EVENT_TABLE()
 
 MainFrame::MainFrame(): wxFrame(NULL, wxID_ANY, "RSA Mail Client"){
@@ -81,8 +85,17 @@ MainFrame::MainFrame(): wxFrame(NULL, wxID_ANY, "RSA Mail Client"){
     wxBoxSizer* hBox3 = new wxBoxSizer(wxHORIZONTAL);
     inboxListBox = new InboxWidget(panel, ID_ListBox_Inbox);
     hBox3->Add(inboxListBox, 1, wxEXPAND);
+    wxBoxSizer* vBox1 = new wxBoxSizer(wxVERTICAL);
     mailText = new MailViewWidget(panel);
-    hBox3->Add(mailText, 3, wxEXPAND);
+    vBox1->Add(mailText, 8, wxEXPAND);
+    wxStaticText* attachText = new wxStaticText(panel, wxID_ANY, L"Anhang:");
+    vBox1->Add(attachText);
+    attachListBox = new wxListBox(panel, ID_ListBox_Inbox_Attachment);
+    vBox1->Add(attachListBox, 2, wxEXPAND);
+    wxButton* downloadAttachment = new wxButton(panel, ID_Button_Download_Attachment, "Anhang herunterladen");
+    vBox1->Add(downloadAttachment, 0, wxCENTER);
+
+    hBox3->Add(vBox1, 3, wxEXPAND);
     mainBox->Add(hBox3, 1, wxEXPAND);
 
 
@@ -220,8 +233,9 @@ void MainFrame::UpdateInboxListBox(int selection){
 
 void MainFrame::OnMailFolderChanged(wxCommandEvent& event){
     mailTimer->Notify();
-    mailText->SetPage("");
     inboxListBox->Clear();
+    attachListBox->Clear();
+    mailText->SetPage("");
     
     UpdateInboxListBox(-1);
 }
@@ -239,6 +253,10 @@ void MainFrame::OnMailSelected(wxCommandEvent& event){
         wxSystemSettings settings;
         wxColour color = settings.GetColour(wxSYS_COLOUR_LISTBOXTEXT);
         mailText->SetPage("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+">"+addHTMLBrNewLn(database->receiveMail(rsa, inboxListBox->GetSelection()))+"</font>");
+        //Load Attachments
+        std::vector<std::string> attachNames = database->getAttachedFilenames(rsa, inboxListBox->GetSelection());
+        attachListBox->Clear();
+        for(int i = 0; i < attachNames.size(); i++) {attachListBox->Append(attachNames.at(i));}
         //Gelesen markieren
         if (!database->getRead(inboxListBox->GetSelection())){
             database->setRead(rsa, inboxListBox->GetSelection());
@@ -256,6 +274,10 @@ void MainFrame::OnMailSelected(wxCommandEvent& event){
             wxSystemSettings settings;
             wxColour color = settings.GetColour(wxSYS_COLOUR_LISTBOXTEXT);
             mailText->SetPage("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+">"+addHTMLBrNewLn(database->receiveSentMail(rsa, inboxListBox->GetSelection()))+"</font>");
+            //Load Attachments
+            std::vector<std::string> attachNames = database->getSentAttachedFilenames(rsa, inboxListBox->GetSelection());
+            attachListBox->Clear();
+            for(int i = 0; i < attachNames.size(); i++) {attachListBox->Append(attachNames.at(i));}
             if(database->getSentRead(inboxListBox->GetSelection())){
                 senderText->SetLabelText(std::wstring(L"Empfänger: "+database->getReceiver(rsa, inboxListBox->GetSelection())+" Gesendet: " + database->getSentDate(inboxListBox->GetSelection()) + L" Empfangen: " + database->getSentReceiveDate(inboxListBox->GetSelection())));
             } else {
@@ -396,6 +418,7 @@ void MainFrame::OnContextMenuSelected(wxCommandEvent& event){
 
 void MainFrame::OnClearMailView(wxCommandEvent& event){
     inboxListBox->Clear();
+    attachListBox->Clear();
     mailText->SetPage("");
 }
 
@@ -443,6 +466,33 @@ void MainFrame::OnCheckUpdate(wxCommandEvent& event){
     }
 }
 
+void MainFrame::OnDownloadAttachment(wxCommandEvent& event){
+    if(database->isConnected()){
+        if(mailFolder->GetSelection() == 0){
+            if(inboxListBox->GetSelection()>-1){
+                if(database->getAttachedFilenames(rsa, inboxListBox->GetSelection()).size() > 0){
+                    wxDirDialog dlg(NULL, L"Zielordner auswählen", "", wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+                    if (dlg.ShowModal() == wxID_CANCEL)
+                        return; 
+                    
+                    database->downloadAttachment(rsa, inboxListBox->GetSelection(), std::string(dlg.GetPath().c_str()));
+
+                    wxMessageBox(L"Der Anhang wurde erfolgreich heruntergeladen.", "Anhang herunterladen", wxOK);
+
+                } else {
+                    wxMessageBox(L"Diese Nachricht enthält keinen Anhang.", "Anhang herunterladen", wxOK);
+                }
+            } else {
+                wxMessageBox(L"Sie haben keine Nachricht ausgewählt.", "Anhang herunterladen", wxOK);
+            }
+        } else {
+            wxMessageBox(L"Anhänge können nur von empfangenen Nachrichten heruntergeladen werden.", "Anhang herunterladen", wxOK);
+        }
+    } else {
+        wxMessageBox(L"Sie sind nicht angemeldet.", "Anhang herunterladen", wxOK);
+    }
+}
+
 // MailViewWidget
 
 wxBEGIN_EVENT_TABLE(MailViewWidget, wxHtmlWindow)
@@ -472,7 +522,7 @@ RegisterThread *MainFrame::CreateRegisterThread(){
 
 wxThread::ExitCode RegisterThread::Entry(){
 
-    rsa->generateKeyPair(NULL);
+    rsa->generateKeyPair(NULL, 1024);
         
     wxThreadEvent event(wxEVT_THREAD, REGISTER_THREAD_FINISH);
     wxQueueEvent(evtHandler, event.Clone());

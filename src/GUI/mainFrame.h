@@ -1,3 +1,6 @@
+// Copyright 2021 Thore Lencer
+// SPDX-License-Identifier: AGPL-3.0-only
+
 #pragma once
 #include <wx/wx.h>
 #include <wx/event.h>
@@ -5,9 +8,11 @@
 #include <wx/html/htmlwin.h>
 #include <wx/htmllbox.h>
 #include <wx/notifmsg.h>
+#include <wx/dirdlg.h>
 #include "../Database/database.h"
 #include "taskbarIcon.h"
 #include "../Encryptor/rsa_encryption.h"
+#include "../Encryptor/file_encryption.h"
 #include "../Icon.xpm.h"
 #include "../define.h"
 #include "login.h"
@@ -103,6 +108,7 @@ private:
     wxTimer* mailTimer;
     wxProgressDialog* progress;
     PulseThread* pulseThread;
+    wxListBox* attachListBox;
 
     void OnExit(wxCommandEvent& event);
     void OnMinimize(wxCommandEvent& event);
@@ -129,6 +135,7 @@ private:
     void OnUpdateFinish(wxThreadEvent& event);
     void OnClose(wxCloseEvent& event);
     void OnCheckUpdate(wxCommandEvent& event);
+    void OnDownloadAttachment(wxCommandEvent& event);
 
     RegisterThread *CreateRegisterThread();
     PulseThread *CreatePulseThread();

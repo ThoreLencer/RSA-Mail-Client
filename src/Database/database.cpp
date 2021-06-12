@@ -509,7 +509,37 @@ int Mail_Database::getCurrentUnreadCaptionCount(){
     return count;
 }
 
-void Mail_Database::sendMail(RSA_Encryptor* rsa, int To, std::wstring Caption, std::wstring Message, RSA_Pub_Key key) {
+void Mail_Database::sendMail(RSA_Encryptor* rsa, int To, std::wstring Caption, std::wstring Message, RSA_Pub_Key key, std::vector<Attachment> attachmentList) {
+    //Prepare Attachment
+    std::wstring attachInfo = std::to_wstring(attachmentList.size()) + L";";
+    
+    wxFFileOutputStream out("attach.zip");
+    wxZipOutputStream zip(out);
+    FILE_Encryptor filecrypt;
+    std::string fileKey = filecrypt.generateRandomKey();
+    for(int i = 0; i < attachmentList.size(); i++){
+        attachInfo = attachInfo + attachmentList.at(i).filename + ";";
+        wxZipEntry *entry=new wxZipEntry(attachmentList.at(i).filename); 
+        zip.PutNextEntry(entry);
+
+        unsigned char* entryContents = (unsigned char*)malloc(filecrypt.getFileLength(attachmentList.at(i).filepath));
+        filecrypt.fileToBuffer(attachmentList.at(i).filepath, entryContents);
+
+        zip.Write(entryContents, (size_t)filecrypt.getFileLength(attachmentList.at(i).filepath));
+    }
+    zip.CloseEntry(); 
+	zip.Close(); 
+	out.Close(); 
+
+    filecrypt.encryptFile("attach.zip", "attach.zip", fileKey);
+
+   //Read in ZIP File
+    int zipLength = filecrypt.getFileLength("attach.zip");
+    unsigned char* zipContents = (unsigned char*)malloc(zipLength);
+    filecrypt.fileToBuffer("attach.zip", zipContents);
+
+
+    //Prepare Date and Signature
     RSA_Pub_Key signKey;
     mpz_init_set(signKey.e, rsa->getPrivKey().d);
     mpz_init_set(signKey.n, rsa->getPubKey().n);
@@ -517,10 +547,25 @@ void Mail_Database::sendMail(RSA_Encryptor* rsa, int To, std::wstring Caption, s
     std::tm* time = std::localtime(&now);
     std::string datestring = "";
     datestring = std::to_string(time->tm_year + 1900) + '-' + std::to_string(time->tm_mon + 1) + '-' + std::to_string(time->tm_mday) + ' ' + std::to_string(time->tm_hour) + ':' + std::to_string(time->tm_min) + ':' + std::to_string(time->tm_sec);
+    //Generate Query
+    std::string strcmd = std::string("INSERT INTO `Messages`(`From`, `To`, `Caption`, `Message`, `Signature`, `SenderCaption`, `SenderMessage`, `Date`, `SenderDate`, `AttachInfo`, `SenderAttachInfo`, `AttachmentKey`, `Attachment`) VALUES (\"" + std::to_string(account_id) + "\",\"" + std::to_string(To) + "\", \"" + rsa->encryptString(Caption, key) + "\", \"" + rsa->encryptString(Message, key) + "\", \"" + rsa->encryptString(L"Signature OK", signKey) + "\", \"" + rsa->encryptString(Caption, rsa->getPubKey()) + "\", \"" + rsa->encryptString(Message, rsa->getPubKey())+ "\", \"" + rsa->encryptString(std::wstring(datestring.begin(), datestring.end()), key) + "\", \"" + rsa->encryptString(std::wstring(datestring.begin(), datestring.end()), rsa->getPubKey())+ "\", \"" + rsa->encryptString(attachInfo, key) + "\", \"" + rsa->encryptString(attachInfo, rsa->getPubKey())+ "\", \"" + rsa->encryptString(std::wstring(fileKey.begin(), fileKey.end()), key)+ "\", \'").c_str();
+    char* query = (char*) malloc(2*filecrypt.getFileLength("attach.zip")+strcmd.length()+32);
+    strcpy(query, strcmd.c_str());
+    char* end = query + strlen(query);
+    char *debut, *fin;
+	debut = end;
+    end += mysql_real_escape_string(mysql, end, reinterpret_cast<char*>(zipContents), filecrypt.getFileLength("attach.zip"));
+    fin = end;
+	*end++ = '\'';
+    *end++ = ')';
 
-    if(mysql_query(mysql, std::string("INSERT INTO `Messages`(`From`, `To`, `Caption`, `Message`, `Signature`, `SenderCaption`, `SenderMessage`, `Date`, `SenderDate`) VALUES (\"" + std::to_string(account_id) + "\",\"" + std::to_string(To) + "\", \"" + rsa->encryptString(Caption, key) + "\", \"" + rsa->encryptString(Message, key) + "\", \"" + rsa->encryptString(L"Signature OK", signKey) + "\", \"" + rsa->encryptString(Caption, rsa->getPubKey()) + "\", \"" + rsa->encryptString(Message, rsa->getPubKey())+ "\", \"" + rsa->encryptString(std::wstring(datestring.begin(), datestring.end()), key) + "\", \"" + rsa->encryptString(std::wstring(datestring.begin(), datestring.end()), rsa->getPubKey()) + "\")").c_str())){
+    //Perform Query
+    if(mysql_real_query(mysql, query, (unsigned long) (end - query))){
         std::cout << mysql_error(mysql) << std::endl;
     }
+
+    //Delete ZIP File
+    //remove("attach.zip");
 }
 
 RSA_Pub_Key Mail_Database::userKey(RSA_Encryptor* rsa, int value){
@@ -784,4 +829,110 @@ int Mail_Database::sendVerificationEmail(RSA_Encryptor* rsa, std::string emailAd
 
 void Mail_Database::setEmail(std::wstring email){
     account_email = email;
+}
+
+std::vector<std::string> Mail_Database::getAttachedFilenames(RSA_Encryptor* rsa, int ID){
+    if (mysql_query(mysql, std::string("SELECT `AttachInfo` FROM `Messages` WHERE `ID`=" + std::to_string(mail_captions.at(ID).ID)).c_str())) {
+        std::cout << mysql_error(mysql) << std::endl;
+    }
+    res = mysql_use_result(mysql);
+    std::string attachInfo;
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(res)) != NULL){
+        attachInfo = row[0];
+    }
+
+    // Release memories
+    mysql_free_result(res);
+
+    std::wstring info = rsa->decryptString(attachInfo, rsa->getPubKey(), rsa->getPrivKey());
+
+    //Delimit
+    std::string tmp; 
+    std::stringstream ss(std::string(info.begin(), info.end()));
+    std::vector<std::string> names;
+
+    while(getline(ss, tmp, ';')){
+        names.push_back(tmp);
+    }
+    if(names.size() > 0)
+        names.erase(names.begin());
+    return names;
+}
+
+std::vector<std::string> Mail_Database::getSentAttachedFilenames(RSA_Encryptor* rsa, int ID){
+    if (mysql_query(mysql, std::string("SELECT `AttachInfo` FROM `Messages` WHERE `ID`=" + std::to_string(sent_captions.at(ID).ID)).c_str())) {
+        std::cout << mysql_error(mysql) << std::endl;
+    }
+    res = mysql_use_result(mysql);
+    std::string attachInfo;
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(res)) != NULL){
+        attachInfo = row[0];
+    }
+
+    // Release memories
+    mysql_free_result(res);
+
+    std::wstring info = rsa->decryptString(attachInfo, rsa->getPubKey(), rsa->getPrivKey());
+
+    //Delimit
+    std::string tmp; 
+    std::stringstream ss(std::string(info.begin(), info.end()));
+    std::vector<std::string> names;
+
+    while(getline(ss, tmp, ';')){
+        names.push_back(tmp);
+    }
+    if(names.size() > 0)
+        names.erase(names.begin());
+    return names;
+}
+
+void Mail_Database::downloadAttachment(RSA_Encryptor* rsa, int ID, std::string destDir){
+    //Get Filekey
+    if (mysql_query(mysql, std::string("SELECT `AttachmentKey`, `Attachment`, LENGTH(`Attachment`) FROM `Messages` WHERE `ID`=" + std::to_string(mail_captions.at(ID).ID)).c_str())) {
+        std::cout << mysql_error(mysql) << std::endl;
+    }
+    res = mysql_use_result(mysql);
+    std::string attachKey;
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(res)) != NULL){
+        attachKey = row[0];
+        std::ofstream os;
+        os.open ("Attach.zip", std::ios::binary);
+        os.seekp(0, std::ios::beg);
+
+        os.write(row[1], atoi(row[2]));
+        os.close();
+    }
+
+    // Release memories
+    mysql_free_result(res);
+
+    std::wstring fileKey = rsa->decryptString(attachKey, rsa->getPubKey(), rsa->getPrivKey());
+    std::string keyBuffer = std::string(fileKey.begin(), fileKey.end()).c_str();
+    FILE_Encryptor filecrypt;
+
+    filecrypt.decryptFile("Attach.zip", "Attach.zip", keyBuffer);
+
+    //Extrakt ZIP
+    wxZipEntry* entry;
+    wxFFileInputStream in("Attach.zip");
+    wxZipInputStream zip(in);
+    entry = zip.GetNextEntry();
+    while (entry != NULL)
+    {
+        // read 'zip' to access the entry's data
+        wxFileOutputStream out(std::string(destDir + "/" + entry->GetName()));
+        char *buffer = (char*)malloc(entry->GetSize());
+        zip.Read(buffer, entry->GetSize());
+        size_t realLen = zip.LastRead();
+        //Save
+        out.Write(buffer, realLen);
+        out.Close();
+        entry = zip.GetNextEntry();
+    }
+
+    //remove("Attach.zip");
 }

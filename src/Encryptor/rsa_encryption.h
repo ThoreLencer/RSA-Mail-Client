@@ -20,7 +20,7 @@ struct RSA_Pub_Key {
 
 class RSA_Encryptor {
     private:
-        void generateRandomPrime(mpz_ptr value);
+        void generateRandomPrime(mpz_ptr value, int bits);
         bool checkPrime(mpz_ptr value);
 
         RSA_Priv_Key privKey;
@@ -29,7 +29,7 @@ class RSA_Encryptor {
         const int firstPrimes[20] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 73, 79, 83, 89, 97};
     public:
         void init();
-        void generateKeyPair(wxProgressDialog* dlg);
+        void generateKeyPair(wxProgressDialog* dlg, int bits);
         std::string encryptInt(int value);
         int decryptInt(std::string value);
 

@@ -1,3 +1,6 @@
+// Copyright 2021 Thore Lencer
+// SPDX-License-Identifier: AGPL-3.0-only
+
 #include "register.h"
 
 RegisterFrame::RegisterFrame(Mail_Database* database, RSA_Encryptor* rsa, wxEvtHandler* mainFrame): wxFrame(NULL, wxID_ANY, "Registrierung") {

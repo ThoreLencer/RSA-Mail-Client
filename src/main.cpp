@@ -3,7 +3,7 @@
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
-    #include <wx/wx.h>
+#include <wx/wx.h>
 #endif
 #include <wx/richtext/richtextctrl.h>
 #include <wx/progdlg.h>  
@@ -45,6 +45,7 @@ wxDEFINE_EVENT(EVT_COMMAND_LOGGEDIN, wxCommandEvent);
 wxDEFINE_EVENT(EVT_COMMAND_PERFORMUPDATE, wxCommandEvent);
 wxDEFINE_EVENT(EVT_COMMAND_REGISTER, wxCommandEvent);
 wxDEFINE_EVENT(EVT_COMMAND_MAINFRAME_ENABLE, wxCommandEvent);
+
 class MyApp : public wxApp {
 private:
     wxLocale* m_locale;

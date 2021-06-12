@@ -28,7 +28,7 @@ bool RSA_Encryptor::checkPrime(mpz_ptr value) {
     return output;
 }
 
-void RSA_Encryptor::generateRandomPrime(mpz_ptr value) {
+void RSA_Encryptor::generateRandomPrime(mpz_ptr value, int bits) {
     gmp_randstate_t randState;
     gmp_randinit_mt(randState);
     gmp_randseed_ui(randState, time(NULL));
@@ -38,7 +38,7 @@ void RSA_Encryptor::generateRandomPrime(mpz_ptr value) {
     do
     {
        mpz_init(randPrime);
-       mpz_urandomb(randPrime, randState, 1024);
+       mpz_urandomb(randPrime, randState, bits);
     } while (checkPrime(randPrime) == false);
 
     mpz_init(value);
@@ -47,7 +47,7 @@ void RSA_Encryptor::generateRandomPrime(mpz_ptr value) {
     gmp_randclear(randState);
 }
 
-void RSA_Encryptor::generateKeyPair(wxProgressDialog* dlg) {
+void RSA_Encryptor::generateKeyPair(wxProgressDialog* dlg, int bits) {
     mpz_t p, q, n, e, d, eulerP, psub1, qsub1, gcd;
     if(dlg != NULL)
         dlg->Update(0);
@@ -62,10 +62,10 @@ void RSA_Encryptor::generateKeyPair(wxProgressDialog* dlg) {
     if(dlg != NULL)
         dlg->Update(5);
     //Zwei zufällige Primzahlen generieren
-    generateRandomPrime(p);
+    generateRandomPrime(p, bits);
     if(dlg != NULL)
         dlg->Update(25);
-    generateRandomPrime(q);
+    generateRandomPrime(q, bits);
     if(dlg != NULL)
         dlg->Update(50);
     //Produkt bilden
@@ -80,7 +80,7 @@ void RSA_Encryptor::generateKeyPair(wxProgressDialog* dlg) {
     do
     {
         mpz_init(e);
-        generateRandomPrime(e);
+        generateRandomPrime(e, bits);
         mpz_gcd(gcd, eulerP, e);
     } while (mpz_cmp_si(gcd, 1) != 0);
     if(dlg != NULL)

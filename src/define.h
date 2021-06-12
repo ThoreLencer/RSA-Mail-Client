@@ -1,3 +1,6 @@
+// Copyright 2021 Thore Lencer
+// SPDX-License-Identifier: AGPL-3.0-only
+
 #pragma once
 #include <wx/wx.h>
 #include <wx/thread.h>
@@ -7,6 +10,11 @@ wxDECLARE_EVENT(EVT_COMMAND_CLEARMAILVIEW, wxCommandEvent);
 wxDECLARE_EVENT(EVT_COMMAND_LOGGEDIN, wxCommandEvent);
 wxDECLARE_EVENT(EVT_COMMAND_PERFORMUPDATE, wxCommandEvent);
 wxDECLARE_EVENT(EVT_COMMAND_MAINFRAME_ENABLE, wxCommandEvent);
+
+struct Attachment {
+    std::string filepath;
+    std::string filename;
+};
 
 enum {
     ID_EVT_CLEARMAILVIEW,
@@ -40,6 +48,9 @@ enum {
     ID_Button_Register,
     ID_Button_PasswdReset,
     ID_Button_Login,
+    ID_Button_AttachFile,
+    ID_Button_DetachFile,
+    ID_Button_Download_Attachment,
     ID_Logout,
     ID_Edit_To,
     ID_Edit_Caption,
@@ -47,6 +58,8 @@ enum {
     ID_Button_Send,
     ID_Timer_Mail_Sync,
     ID_ListBox_Inbox,
+    ID_ListBox_Attachment,
+    ID_ListBox_Inbox_Attachment,
     ID_Text_Mail,
     ID_MENU_CONTEXT_INBOX_1,
     ID_MENU_CONTEXT_INBOX_2,

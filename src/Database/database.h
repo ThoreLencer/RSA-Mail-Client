@@ -6,10 +6,15 @@
 #include <mysql/mysql.h>
 #include <iostream>
 #include "../Encryptor/rsa_encryption.h"
+#include "../Encryptor/file_encryption.h"
+#include "../Encryptor/aes_encryption.h"
+#include "../define.h"
 #include <fstream>
 #include <vector>
 #include <ctime>
 #include <quickmail.h>
+#include <wx/wfstream.h>
+#include <wx/zipstrm.h>
 
 /*
     secure.h:
@@ -27,7 +32,7 @@
 #include "../Secure/secure.h"
 
 
-#define CLIENT_VERSION 19
+#define CLIENT_VERSION 20
 
 struct Mail_Caption{
     int ID;
@@ -68,7 +73,10 @@ class Mail_Database {
         std::vector<Mail_Caption> receiveSentCaptions(RSA_Encryptor* rsa);
         std::wstring receiveMail(RSA_Encryptor* rsa, int ID);
         std::wstring receiveSentMail(RSA_Encryptor* rsa, int ID);
-        void sendMail(RSA_Encryptor* rsa, int To, std::wstring Caption, std::wstring Message, RSA_Pub_Key key);
+        std::vector<std::string> getAttachedFilenames(RSA_Encryptor* rsa, int ID);
+        std::vector<std::string> getSentAttachedFilenames(RSA_Encryptor* rsa, int ID);
+        void downloadAttachment(RSA_Encryptor* rsa, int ID, std::string destDir);
+        void sendMail(RSA_Encryptor* rsa, int To, std::wstring Caption, std::wstring Message, RSA_Pub_Key key, std::vector<Attachment> attachmentList);
         bool userExists(RSA_Encryptor* rsa);
         int userExists(RSA_Encryptor* rsa, std::string value);
         RSA_Pub_Key userKey(RSA_Encryptor* rsa, std::string value);
