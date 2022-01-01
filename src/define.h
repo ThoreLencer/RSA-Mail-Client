@@ -6,6 +6,8 @@
 #include <wx/thread.h>
 #include <wx/progdlg.h>
 
+#define CLIENT_VERSION 21
+
 wxDECLARE_EVENT(EVT_COMMAND_CLEARMAILVIEW, wxCommandEvent);
 wxDECLARE_EVENT(EVT_COMMAND_LOGGEDIN, wxCommandEvent);
 wxDECLARE_EVENT(EVT_COMMAND_PERFORMUPDATE, wxCommandEvent);

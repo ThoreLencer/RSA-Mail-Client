@@ -11,12 +11,14 @@
                 "Encryptor/rsa_encryption.cpp",
                 "Encryptor/aes_encryption.cpp",
                 "Encryptor/file_encryption.cpp",
-                "Database/database.cpp",
                 "GUI/login.cpp",
                 "GUI/mailwriter.cpp",
                 "GUI/register.cpp",
                 "GUI/taskbarIcon.cpp",
                 "GUI/popupDialog.cpp",
+                "Network/network.cpp",
+                "Network/package.cpp",
+                "Database/database.cpp",
                 "-o",
                 "../buildLinux/RSA_Client",
                 //INCLUDES
@@ -35,8 +37,6 @@
                 //LibMYSQL
                 "/usr/lib/x86_64-linux-gnu/libmysqlclient.a",
                 "-lz",
-                //LIBQuickMail
-                "/usr/local/lib/libquickmail.a",
                 "-lcurl",
                 "-lssl",
                 "-lcrypto",
@@ -115,7 +115,7 @@
                 "-lpthread",
                 "-ldl",
                 "-lrt"
-
+               
 
 
             ],
@@ -142,12 +142,14 @@
                 "Encryptor/rsa_encryption.cpp",
                 "Encryptor/aes_encryption.cpp",
                 "Encryptor/file_encryption.cpp",
-                "Database/database.cpp",
                 "GUI/login.cpp",
                 "GUI/mailwriter.cpp",
                 "GUI/register.cpp",
                 "GUI/taskbarIcon.cpp",
                 "GUI/popupDialog.cpp",
+                "Network/network.cpp",
+                "Network/package.cpp",
+                "Database/database.cpp",
                 "-o",
                 "../buildWin/RSA_Client.exe",
                 "resource.o",
@@ -197,7 +199,6 @@
                 "-ladvapi32",
                 "-lwsock32",
                 "-lgdi32",
-                "/usr/x86_64-w64-mingw32/lib/libquickmail.dll.a",
                 "-lcurl",
                 "-lcrypt32",
                 "-lws2_32",

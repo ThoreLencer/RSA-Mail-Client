@@ -24,6 +24,8 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_MENU(ID_Write_Mail, MainFrame::OnWriteMail)
     EVT_MENU(ID_Delete_Mail, MainFrame::OnDeleteMail)
     EVT_COMMAND(ID_MENU_CONTEXT_INBOX_1, wxEVT_COMMAND_MENU_SELECTED, MainFrame::OnContextMenuSelected)
+    EVT_COMMAND(ID_MENU_CONTEXT_INBOX_2, wxEVT_COMMAND_MENU_SELECTED, MainFrame::OnContextMenuSelected)
+    EVT_COMMAND(ID_MENU_CONTEXT_INBOX_3, wxEVT_COMMAND_MENU_SELECTED, MainFrame::OnContextMenuSelected)
     EVT_COMMAND(ID_EVT_CLEARMAILVIEW, EVT_COMMAND_CLEARMAILVIEW, MainFrame::OnClearMailView)
     EVT_COMMAND(ID_EVT_PERFORMUPDATE, EVT_COMMAND_PERFORMUPDATE, MainFrame::OnPerformUpdate)
     EVT_THREAD(UPDATE_THREAD_FINISH, MainFrame::OnUpdateFinish)
@@ -34,9 +36,9 @@ wxEND_EVENT_TABLE()
 
 MainFrame::MainFrame(): wxFrame(NULL, wxID_ANY, "RSA Mail Client"){
     rsa = new RSA_Encryptor;
-    database = new Mail_Database;
-    database->init();
     rsa->init();
+    client = new Client();
+    database = new Database();
     this->SetIcon(icon_xmp);
     //Menubar
     wxMenu* menuProgram = new wxMenu;
@@ -76,6 +78,9 @@ MainFrame::MainFrame(): wxFrame(NULL, wxID_ANY, "RSA Mail Client"){
     //Benutzer - Sender
     wxBoxSizer* hBox2 = new wxBoxSizer(wxHORIZONTAL);
     accountText = new wxStaticText(panel, ID_Account_Text, "Benutzer: ");
+    accountText->SetLabelText(std::string("Benutzer: "));
+    
+
     hBox2->Add(accountText, 1, wxEXPAND);
     senderText = new wxStaticText(panel, ID_Sender_Text, "Sender: ");
     hBox2->Add(senderText, 3, wxEXPAND);
@@ -131,7 +136,7 @@ void MainFrame::OnMinimize(wxCommandEvent& event){
     
 void MainFrame::OnLogin(wxCommandEvent& event){
     // Login Dialog
-    LoginFrame* loginframe = new LoginFrame(database, rsa, this);
+    LoginFrame* loginframe = new LoginFrame(rsa, client, this);
     wxSize size;
     size.x = 500;
     size.y = 230;
@@ -143,8 +148,8 @@ void MainFrame::OnLogin(wxCommandEvent& event){
 }
 
 void MainFrame::OnLoggedIn(wxCommandEvent& event){
-    accountText->SetLabelText(std::string("Benutzer: " + database->getUsername()));
-    mailTimer->Start(5000, false);
+    accountText->SetLabelText(std::string("Benutzer: " + client->userName));
+    mailTimer->Start(10000, false);
     mailTimer->Notify();
 
     Enable();
@@ -156,30 +161,40 @@ void MainFrame::OnEnableFrame(wxCommandEvent& event){
 
 void MainFrame::OnSyncMails(wxTimerEvent& event){
     //Old Non_Read Message Count
-    int oldcount = database->getCurrentCaptionCount();
-    if (database->isConnected()){
+    int oldcount = inboxListBox->GetItemCount();     
+    if (client->ServerReachable()){
         //Get Messages
         if(mailFolder->GetSelection() == 0) {
-            if (database->messagesAvailable()){
-                database->receiveCaptions(rsa);
-                //Send Notification
-                for(int i = oldcount; i < database->getCurrentCaptionCount(); i++){
-                    if(database->getRead(i) == false){
-                        wxNotificationMessage notif(L"Nachricht erhalten", std::wstring(L"Sie haben eine Nachricht von " + database->getUsername(rsa, database->getMailCaptions().at(i).From) + L" erhalten."));
+            if (client->GetCountToUser(rsa) > oldcount){
+                database->RecvCaptions = client->GetCaptionsToUser(rsa);
+                //Send Notification and Receive Messages
+                for(int i = oldcount; i < database->RecvCaptions.size(); i++){
+                    database->RecvMessages.push_back(client->GetMessage(rsa, database->RecvCaptions.at(i).ID));
+                    if(database->RecvCaptions.at(i).read == 0){
+                        wxNotificationMessage notif(L"Nachricht erhalten", std::wstring(L"Sie haben eine Nachricht von " + client->GetUsername(rsa, database->RecvCaptions.at(i).Person) + L" erhalten."));
                         notif.Show(0);
                     }
                 }
                 UpdateInboxListBox(-1);
             }
         } else if (mailFolder->GetSelection() == 1){
-            if(database->sentMessagesAvailable()){
-                database->receiveSentCaptions(rsa);
+            if(client->GetCountFromUser(rsa) > oldcount){
+                database->SentCaptions = client->GetCaptionsFromUser(rsa);
+                //Receive Messages
+                for(int i = oldcount; i < database->SentCaptions.size(); i++){
+                    database->SentMessages.push_back(client->GetMessage(rsa, database->SentCaptions.at(i).ID));
+                }
                 UpdateInboxListBox(-1);
             }
             //Check read states
-            if (database->updateSentRead(rsa)){
-                //Update ListBox
-                UpdateInboxListBox(-1);
+            for (int i = 0; i < database->SentCaptions.size(); i++){
+                if (database->SentCaptions.at(i).read == 0){
+                    if(database->SentCaptions.at(i).read != client->GetRead(rsa, database->SentCaptions.at(i).ID)){
+                        database->SentCaptions.at(i).read = 1;
+                        //Update ListBox
+                        UpdateInboxListBox(-1);
+                    }
+                }
             }
         }
     } else {
@@ -198,33 +213,33 @@ void MainFrame::UpdateInboxListBox(int selection){
     inboxListBox->Clear();
     wxSystemSettings settings;
     wxColour color;
-    std::vector<Mail_Caption> tmp;
+    std::vector<Caption> tmp;
     if(mailFolder->GetSelection() == 0) {
-        tmp = database->getMailCaptions();
+        tmp = database->RecvCaptions;
         for (int i = 0; i < tmp.size(); i++){
             if(i != inboxListBox->GetSelection()){
                 color = settings.GetColour(wxSYS_COLOUR_LISTBOXTEXT);
             } else {
                 color = settings.GetColour(wxSYS_COLOUR_LISTBOXHIGHLIGHTTEXT);
             }
-            if(tmp.at(i).Read == 0){
-                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).caption + " (Ungelesen)</b> <br>Von: " + database->getSender(rsa, i) + "</font>");
+            if(tmp.at(i).read == 0){
+                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).Caption + " (Ungelesen)</b> <br>Von: " + client->GetUsername(rsa, tmp.at(i).Person) + "</font>");
             } else {
-                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).caption + "</b> <br>Von: " + database->getSender(rsa, i)+ "</font>");
+                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).Caption + "</b> <br>Von: " + client->GetUsername(rsa, tmp.at(i).Person) + "</font>");
             }
         }
     } else if(mailFolder->GetSelection() == 1) {
-        tmp = database->getSentCaptions();
+        tmp = database->SentCaptions;
         for (int i = 0; i < tmp.size(); i++){
             if(i != inboxListBox->GetSelection()){
                 color = settings.GetColour(wxSYS_COLOUR_LISTBOXTEXT);
             } else {
                 color = settings.GetColour(wxSYS_COLOUR_LISTBOXHIGHLIGHTTEXT);
             }
-            if(tmp.at(i).Read == 0){
-                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).caption + " (Ungelesen)</b> <br>An: " + database->getReceiver(rsa, i)+ "</font>");
+            if(tmp.at(i).read == 0){
+                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).Caption + " (Ungelesen)</b> <br>An: " + client->GetUsername(rsa, tmp.at(i).Person)+ "</font>");
             } else {
-                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).caption + "</b> <br>An: " + database->getReceiver(rsa, i)+ "</font>");
+                inboxListBox->Append("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+"><b>"+tmp.at(i).Caption + "</b> <br>An: " + client->GetUsername(rsa, tmp.at(i).Person)+ "</font>");
             }
         }
     }
@@ -252,36 +267,33 @@ void MainFrame::OnMailSelected(wxCommandEvent& event){
         //Display selected Mail
         wxSystemSettings settings;
         wxColour color = settings.GetColour(wxSYS_COLOUR_LISTBOXTEXT);
-        mailText->SetPage("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+">"+addHTMLBrNewLn(database->receiveMail(rsa, inboxListBox->GetSelection()))+"</font>");
+        mailText->SetPage("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+">"+addHTMLBrNewLn(database->RecvMessages.at(inboxListBox->GetSelection()))+"</font>");
         //Load Attachments
-        std::vector<std::string> attachNames = database->getAttachedFilenames(rsa, inboxListBox->GetSelection());
-        attachListBox->Clear();
-        for(int i = 0; i < attachNames.size(); i++) {attachListBox->Append(attachNames.at(i));}
+        //std::vector<std::string> attachNames = database->getAttachedFilenames(rsa, inboxListBox->GetSelection());
+        //attachListBox->Clear();
+        //for(int i = 0; i < attachNames.size(); i++) {attachListBox->Append(attachNames.at(i));}
         //Gelesen markieren
-        if (!database->getRead(inboxListBox->GetSelection())){
-            database->setRead(rsa, inboxListBox->GetSelection());
+        if (database->RecvCaptions.at(inboxListBox->GetSelection()).read == 0){
+            client->SetRead(database, rsa, inboxListBox->GetSelection());
             UpdateInboxListBox(inboxListBox->GetSelection());
         }
-        if(database->mailSignatureValid(rsa, inboxListBox->GetSelection())){
-            senderText->SetLabelText(std::wstring("Sender: " + database->getSender(rsa, inboxListBox->GetSelection()) + L" (ID OK) Gesendet: " + database->getDate(inboxListBox->GetSelection()) + L" Empfangen: " + database->getReceiveDate(inboxListBox->GetSelection())));
-        } else {
-            senderText->SetLabelText(std::wstring("Sender: " + database->getSender(rsa, inboxListBox->GetSelection()) + L" (ACHTUNG: ID FALSCH) Gesendet: " + database->getDate(inboxListBox->GetSelection()) + L" Empfangen: " + database->getReceiveDate(inboxListBox->GetSelection())));
-        }
+        senderText->SetLabelText(std::wstring("Sender: " + client->GetUsername(rsa, database->RecvCaptions.at(inboxListBox->GetSelection()).Person) + L" (ID OK) Gesendet: " + database->RecvCaptions.at(inboxListBox->GetSelection()).Date + L" Empfangen: " + database->RecvCaptions.at(inboxListBox->GetSelection()).ReceiveDate));
+       
     }
     } else if (mailFolder->GetSelection() == 1){
         if (inboxListBox->GetSelection() > -1){
             //Display Mail
             wxSystemSettings settings;
             wxColour color = settings.GetColour(wxSYS_COLOUR_LISTBOXTEXT);
-            mailText->SetPage("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+">"+addHTMLBrNewLn(database->receiveSentMail(rsa, inboxListBox->GetSelection()))+"</font>");
+            mailText->SetPage("<font color="+color.GetAsString(wxC2S_HTML_SYNTAX)+">"+addHTMLBrNewLn(database->SentMessages.at(inboxListBox->GetSelection()))+"</font>");
             //Load Attachments
-            std::vector<std::string> attachNames = database->getSentAttachedFilenames(rsa, inboxListBox->GetSelection());
-            attachListBox->Clear();
-            for(int i = 0; i < attachNames.size(); i++) {attachListBox->Append(attachNames.at(i));}
-            if(database->getSentRead(inboxListBox->GetSelection())){
-                senderText->SetLabelText(std::wstring(L"Empfänger: "+database->getReceiver(rsa, inboxListBox->GetSelection())+" Gesendet: " + database->getSentDate(inboxListBox->GetSelection()) + L" Empfangen: " + database->getSentReceiveDate(inboxListBox->GetSelection())));
+            //std::vector<std::string> attachNames = database->getSentAttachedFilenames(rsa, inboxListBox->GetSelection());
+            //attachListBox->Clear();
+            //for(int i = 0; i < attachNames.size(); i++) {attachListBox->Append(attachNames.at(i));}
+            if(database->SentCaptions.at(inboxListBox->GetSelection()).read == 1){
+                senderText->SetLabelText(std::wstring(L"Empfänger: "+client->GetUsername(rsa, database->SentCaptions.at(inboxListBox->GetSelection()).Person)+" Gesendet: " + database->SentCaptions.at(inboxListBox->GetSelection()).Date + L" Empfangen: " + database->SentCaptions.at(inboxListBox->GetSelection()).ReceiveDate));
             } else {
-                senderText->SetLabelText(std::wstring(L"Empfänger: "+database->getReceiver(rsa, inboxListBox->GetSelection())+" Gesendet: " + database->getSentDate(inboxListBox->GetSelection()) + L" Empfangen: noch nicht"));
+                senderText->SetLabelText(std::wstring(L"Empfänger: "+client->GetUsername(rsa, database->SentCaptions.at(inboxListBox->GetSelection()).Person)+" Gesendet: " + database->SentCaptions.at(inboxListBox->GetSelection()).Date + L" Empfangen: noch nicht"));
             }
         }
     }
@@ -289,7 +301,7 @@ void MainFrame::OnMailSelected(wxCommandEvent& event){
 
 void MainFrame::OnRegister(wxCommandEvent& event) {
     //Register Dialog
-    RegisterFrame* registerframe = new RegisterFrame(database, rsa, this);
+    RegisterFrame* registerframe = new RegisterFrame(rsa, client, this);
     wxSize size;
     size.x = 500;
     size.y = 250;
@@ -318,10 +330,10 @@ void MainFrame::OnRegisterFinish(wxThreadEvent& event){
     if(!rsa->verifyKey()){
         wxMessageBox("Der Benutzer konnte nicht erstellt werden. Probieren Sie es nocheinmal!", "Fehler", wxOK);
     } else {
-        rsa->savePrivKey(std::string(database->getUsername() + ".key"));
+        rsa->savePrivKey(std::string(client->userName + ".key"));
         // Save User To Database
-        database->createUser(rsa);
-        accountText->SetLabelText(std::string("Benutzer: " + database->getUsername()));
+        client->CreateUser(rsa);
+        accountText->SetLabelText(std::string("Benutzer: " + client->userName));
         wxMessageBox("Der Benutzer wurde erfolgreich registriert.", "Registrierung", wxOK);
         mailTimer->Start(5000, false);
     }
@@ -337,13 +349,11 @@ void MainFrame::OnLogout(wxCommandEvent& event){
     mailText->SetPage("");
     accountText->SetLabelText("Benutzer: ");
     senderText->SetLabelText("Sender: ");
-    if(database->isConnected()){
-        database->close();
-    }
+    client->loggedIn = false;
 }
 
 void MainFrame::OnDeleteAccount(wxCommandEvent& event){
-    if (database->isConnected()){
+    /*if (database->isConnected()){
         if(wxMessageBox(L"Möchten Sie wirklich Ihren Account inklusive aller gesendeten Nachrichten löschen?", L"Account löschen", wxYES_NO) == wxYES){
             database->deleteUser();
             wxCommandEvent event(wxEVT_MENU, ID_Logout);
@@ -353,22 +363,22 @@ void MainFrame::OnDeleteAccount(wxCommandEvent& event){
         }
     } else {
         wxMessageBox(L"Sie sind nicht angemeldet.", L"Account löschen", wxOK);
-    }
+    }*/
 }
 
 void MainFrame::OnGetData(wxCommandEvent& event){
-    if(database->isConnected()){
+    /*if(database->isConnected()){
         database->exportData(std::string(database->getUsername() + ".export"));
         wxMessageBox(std::wstring(L"Die Daten wurden in der Datei " + database->getUsername() + ".export abgelegt."), L"Datenauszug", wxOK);
     } else {
         wxMessageBox(L"Sie sind nicht angemeldet.", L"Datenauszug", wxOK);
-    }
+    }*/
 }
 
 void MainFrame::OnWriteMail(wxCommandEvent& event){
-    if(database->isConnected()){
+    if(client->loggedIn){
         //Mail Writer Dialog
-        MailWriterFrame* writerframe = new MailWriterFrame(database, rsa);
+        MailWriterFrame* writerframe = new MailWriterFrame(rsa, client, L"", "");
         wxSize size;
         size.x = 800;
         size.y = 500;
@@ -385,10 +395,12 @@ void MainFrame::OnDeleteMail(wxCommandEvent& event){
         if(wxMessageBox(L"Wollen Sie die Nachricht wirklich löschen?", L"Nachricht löschen", wxYES_NO) == wxYES){
             if(mailFolder->GetSelection() == 0){
                 //Posteingang
-                database->deleteMail(inboxListBox->GetSelection());
+                client->DeleteMessage(rsa, database->RecvCaptions.at(inboxListBox->GetSelection()).ID);
+                inboxListBox->Delete(inboxListBox->GetSelection());
             } else if (mailFolder->GetSelection() == 1){
                 //Gesendete
-                database->deleteSentMail(inboxListBox->GetSelection());
+                client->DeleteMessage(rsa, database->SentCaptions.at(inboxListBox->GetSelection()).ID);
+                inboxListBox->Delete(inboxListBox->GetSelection());
             }
             mailTimer->Notify();
             wxYield();
@@ -408,10 +420,40 @@ void MainFrame::OnContextMenuSelected(wxCommandEvent& event){
                 break;
             }
             case ID_MENU_CONTEXT_INBOX_2:
-                std::cout << "Context Menu command 2";
+                //Reply
+                if(mailFolder->GetSelection() == 0){
+                    if(inboxListBox->GetSelection() > -1){
+                        //Mail Writer Dialog
+                        //MailWriterFrame* writerframe = new MailWriterFrame(rsa, std::wstring(L"RE: " + database->getCaption(inboxListBox->GetSelection())), database->getSender(rsa, inboxListBox->GetSelection()));
+                        wxSize size;
+                        size.x = 800;
+                        size.y = 500;
+                        //writerframe->SetMinSize(size);
+                        //writerframe->SetSize(800, 500);
+                        //writerframe->Show(true);
+                    } else {
+                        wxMessageBox(L"Sie haben keine Nachricht ausgewählt.", "Fehler", wxOK);
+                    }
+                } else {
+                    wxMessageBox(L"Es können nur für empfangene Nachrichten Antworten verfasst werden.", "Fehler", wxOK);
+                }
                 break;
             case ID_MENU_CONTEXT_INBOX_3:
-                std::cout << "Context Menu command 3";
+                //forward
+                if(inboxListBox->GetSelection() > -1){
+                    wxTextEntryDialog dlg(this, L"Bitte geben Sie den Empfänger ein.", "Weiterleiten", "", wxOK | wxCANCEL);
+                    if(dlg.ShowModal() == wxID_OK){
+                        /*int recvId = database->userExists(rsa, std::string(dlg.GetValue().c_str()));
+                        if(recvId > -1){
+                            
+                        } else {
+                            wxMessageBox(L"Der eingegebene Empfänger konnte nicht gefunden werden.", "Fehler", wxOK);
+                        }*/
+                    }
+                
+                } else {
+                    wxMessageBox(L"Sie haben keine Nachricht ausgewählt.", "Fehler", wxOK);
+                }
                 break;
         }
 }
@@ -444,7 +486,7 @@ void MainFrame::OnUpdateFinish(wxThreadEvent& event){
 }
 
 void MainFrame::OnCheckUpdate(wxCommandEvent& event){
-    if (!database->isConnected()){
+    /*if (!database->isConnected()){
         wxTextEntryDialog dlg(this, L"IP-Adresse:", "Datenbankserver", "rsamail.ddns.net", wxOK | wxCANCEL);
         if(dlg.ShowModal() == wxID_OK){
             if (!database->connect(std::string(dlg.GetValue().c_str()))){
@@ -463,11 +505,11 @@ void MainFrame::OnCheckUpdate(wxCommandEvent& event){
             wxThreadEvent event(EVT_COMMAND_PERFORMUPDATE, ID_EVT_PERFORMUPDATE);
             wxQueueEvent(this, event.Clone());
         }
-    }
+    }*/
 }
 
 void MainFrame::OnDownloadAttachment(wxCommandEvent& event){
-    if(database->isConnected()){
+    /*if(database->isConnected()){
         if(mailFolder->GetSelection() == 0){
             if(inboxListBox->GetSelection()>-1){
                 if(database->getAttachedFilenames(rsa, inboxListBox->GetSelection()).size() > 0){
@@ -490,7 +532,7 @@ void MainFrame::OnDownloadAttachment(wxCommandEvent& event){
         }
     } else {
         wxMessageBox(L"Sie sind nicht angemeldet.", "Anhang herunterladen", wxOK);
-    }
+    }*/
 }
 
 // MailViewWidget
@@ -548,7 +590,7 @@ PulseThread *MainFrame::CreatePulseThread()
 
 UpdateThread *MainFrame::CreateUpdateThread()
 {
-    UpdateThread *thread = new UpdateThread(this, database);
+    UpdateThread *thread = new UpdateThread(this);
 
     if ( thread->Create() != wxTHREAD_NO_ERROR )
     {
@@ -560,10 +602,10 @@ UpdateThread *MainFrame::CreateUpdateThread()
 
 wxThread::ExitCode UpdateThread::Entry(){
     #ifdef LINUX
-        database->updateUnderLinux();
+        //database->updateUnderLinux();
     #endif
     #ifdef WINDOWS
-        database->updateUnderWindows();
+        //database->updateUnderWindows();
     #endif
 
     wxThreadEvent event(wxEVT_THREAD, UPDATE_THREAD_FINISH);
@@ -577,6 +619,13 @@ wxThread::ExitCode UpdateThread::Entry(){
 wxBEGIN_EVENT_TABLE(InboxWidget, wxSimpleHtmlListBox)
     EVT_CONTEXT_MENU(InboxWidget::OnInboxContextMenu)
 wxEND_EVENT_TABLE()
+
+void InboxWidget::OnEraseBgEvent(wxEraseEvent& event){
+    wxSystemSettings settings;
+    wxColour color = settings.GetColour(wxSYS_COLOUR_WINDOW);
+    this->SetBackgroundColour(color);
+    event.Skip(true);
+}
 
 void InboxWidget::OnInboxContextMenu(wxContextMenuEvent& event){
     wxMenu menu;

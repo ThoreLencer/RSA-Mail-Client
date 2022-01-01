@@ -9,30 +9,29 @@
 #include <wx/htmllbox.h>
 #include <wx/notifmsg.h>
 #include <wx/dirdlg.h>
-#include "../Database/database.h"
 #include "taskbarIcon.h"
 #include "../Encryptor/rsa_encryption.h"
 #include "../Encryptor/file_encryption.h"
+#include "../Database/database.h"
 #include "../Icon.xpm.h"
 #include "../define.h"
 #include "login.h"
 #include "register.h"
 #include "mailwriter.h"
+#include "../Network/network.h"
 #include <regex>
 
 class UpdateThread : public wxThread
 {
 public:
-    UpdateThread(wxEvtHandler *frame, Mail_Database* database){
+    UpdateThread(wxEvtHandler *frame){
         this->evtHandler = frame;
-        this->database = database;
     }
 
     virtual ExitCode Entry();
 
 private:
     wxEvtHandler *evtHandler;
-    Mail_Database* database;
 };
 
 class RegisterThread : public wxThread
@@ -89,6 +88,7 @@ class InboxWidget : public wxSimpleHtmlListBox {
         }
     private:
         void OnInboxContextMenu(wxContextMenuEvent& event);
+        void OnEraseBgEvent(wxEraseEvent& event);
         wxDECLARE_EVENT_TABLE();
         wxDECLARE_NO_COPY_CLASS(InboxWidget);
 };
@@ -99,7 +99,8 @@ public:
 private:
 
     RSA_Encryptor* rsa;
-    Mail_Database* database;
+    Database* database;
+    Client* client;
     MailViewWidget* mailText;
     InboxWidget* inboxListBox;
     wxChoice* mailFolder;

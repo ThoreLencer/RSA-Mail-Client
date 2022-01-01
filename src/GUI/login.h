@@ -3,10 +3,10 @@
 
 #pragma once
 #include <wx/wx.h>
-#include "../Database/database.h"
 #include "../Encryptor/rsa_encryption.h"
 #include "../define.h"
 #include "../Icon.xpm.h"
+#include "../Network/network.h"
 #include <wx/busyinfo.h>
 #include "popupDialog.h"
 #include <thread>
@@ -14,27 +14,27 @@
 class LoginThread : public wxThread
 {
 public:
-    LoginThread(RSA_Encryptor* rsa, wxEvtHandler *frame, Mail_Database* database, std::string ip){
+    LoginThread(RSA_Encryptor* rsa, Client* client, wxEvtHandler *frame, std::string ip){
         this->evtHandler = frame;
-        this->database = database;
         this->ip = ip;
         this->rsa = rsa;
+        this->client = client;
     }
 
     virtual ExitCode Entry();
 
 private:
     wxEvtHandler *evtHandler;
-    Mail_Database* database;
     RSA_Encryptor* rsa;
+    Client* client;
     std::string ip;
 };
 
 class LoginFrame : public wxFrame {
 public:
-    LoginFrame(Mail_Database* database, RSA_Encryptor* rsa, wxEvtHandler* mainFrame);
+    LoginFrame(RSA_Encryptor* rsa, Client* client, wxEvtHandler* mainFrame);
 private:
-    Mail_Database* database;
+    Client* client;
     RSA_Encryptor* rsa;
     wxEvtHandler* mainFrameHandler;
     wxProgressDialog* progress;

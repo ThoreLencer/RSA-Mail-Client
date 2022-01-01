@@ -64,6 +64,14 @@
         "cfenv": "cpp",
         "variant": "cpp",
         "codecvt": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "csignal": "cpp",
+        "any": "cpp",
+        "complex": "cpp",
+        "source_location": "cpp",
+        "future": "cpp",
+        "mutex": "cpp",
+        "typeindex": "cpp",
+        "*.ipp": "cpp"
     }
 }

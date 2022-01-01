@@ -18,11 +18,12 @@
 #include "define.h"
 #include "GUI/mainFrame.h"
 #include "Encryptor/rsa_encryption.h"
-#include "Database/database.h"
 #include "GUI/login.h"
 #include "GUI/mailwriter.h"
 #include "GUI/register.h"
 #include <mysql/mysql.h>
+
+#include <time.h>
 
 //Library 1: Installing gmp on Linux mingw cross compile for windows 64bit:
 //download gmp library
@@ -37,8 +38,11 @@
 //Library 3: mysql port for MINGw : https://github.com/reminisc3/mysql-mingw64-port
 
 //TODO
-//Kontaktbuch
-//Rechtsklick Kontextmenü: Löschen, Antworten, Weiterleiten
+//Kontakte (Anzeigen von Personen, denen man bereits geschrieben hat bzw. bereits eine Nachricht erhalten hat)
+//Warteanzeige beim Versenden und Herunterladen der Nachricht/des Anhangs
+//MailSync als Thread (Kein stocken bei Sync) -> Status: Synchronisiere...
+//Rechtsklick Kontextmenü: Weiterleiten
+//Nutzereigene Datenbank -> Nachrichten auf Server löschen nach Empfang
 
 wxDEFINE_EVENT(EVT_COMMAND_CLEARMAILVIEW, wxCommandEvent);
 wxDEFINE_EVENT(EVT_COMMAND_LOGGEDIN, wxCommandEvent);
@@ -60,7 +64,14 @@ void deleteOld(){
     remove("RSA_Client_Old");
 }
 
+//Reimplement Features:
+//-Delete Account
+//-Get Data Extract
+//-Update
+//-Attachments
+
 bool MyApp::OnInit() {
+    srand (time(NULL));
     //Delete old Updatefiles
     deleteOld();
     //Init Application

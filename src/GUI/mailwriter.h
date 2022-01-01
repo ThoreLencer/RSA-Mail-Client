@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 #pragma once
-#include "../Database/database.h"
 #include "../Encryptor/rsa_encryption.h"
 #include <wx/wx.h>
 #include <wx/richtext/richtextctrl.h>
@@ -10,14 +9,14 @@
 #include "../define.h"
 #include "../Icon.xpm.h"
 #include "popupDialog.h"
+#include "../Network/network.h"
 
 class MailWriterFrame : public wxFrame {
 public:
-    MailWriterFrame(Mail_Database* database, RSA_Encryptor* rsa);
+    MailWriterFrame(RSA_Encryptor* rsa, Client* client, std::wstring caption, std::string user);
 private:
-    Mail_Database* database;
     RSA_Encryptor* rsa;
-
+    Client* client;
     wxTextCtrl* toEdit;
     wxTextCtrl* captionEdit;
     wxRichTextCtrl* mailEdit;

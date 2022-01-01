@@ -3,23 +3,23 @@
 
 #include "mailwriter.h"
 
-MailWriterFrame::MailWriterFrame(Mail_Database* database, RSA_Encryptor* rsa): wxFrame(NULL, wxID_ANY, "Nachricht schreiben"){
-    this->database = database;
+MailWriterFrame::MailWriterFrame(RSA_Encryptor* rsa, Client* client, std::wstring caption, std::string user): wxFrame(NULL, wxID_ANY, "Nachricht schreiben"){
     this->rsa = rsa;
     this->SetIcon(icon_xmp);
+    this->client = client;
     
     wxFont myFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     //Panel for TAB Order working
     wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
     wxStaticText* toText = new wxStaticText(panel, wxID_ANY, L"An:");
-    toEdit = new wxTextCtrl(panel, ID_Edit_To, "");
+    toEdit = new wxTextCtrl(panel, ID_Edit_To, user);
     toEdit->SetFont(myFont);
     mainSizer->Add(toText, 0, wxEXPAND);
     mainSizer->Add(toEdit, 0, wxEXPAND);
 
     wxStaticText* captionText = new wxStaticText(panel, wxID_ANY, L"Betreff:");
-    captionEdit = new wxTextCtrl(panel, ID_Edit_Caption, "");
+    captionEdit = new wxTextCtrl(panel, ID_Edit_Caption, caption);
     captionEdit->SetFont(myFont);
     mainSizer->Add(captionText, 0, wxEXPAND);
     mainSizer->Add(captionEdit, 0, wxEXPAND);
@@ -55,15 +55,16 @@ MailWriterFrame::MailWriterFrame(Mail_Database* database, RSA_Encryptor* rsa): w
 
 void MailWriterFrame::OnSend(wxCommandEvent& event) {
     // Check if Boxes are filled
+    if(client->ServerReachable()){
     if (captionEdit->GetValue() != "" && toEdit->GetValue() != ""){
         PopupDialog* serverPopup = new PopupDialog(L"Nachricht Senden", L"Sende Nachricht... Bitte warten.", this);
         wxYield(); 
         //Check if Receiver exists
         if (std::wstring(mailEdit->GetValue().c_str()).length() < 50000){
             std::string recv = std::string(toEdit->GetValue().c_str());
-            int recvID = database->userExists(rsa, recv);
+            int recvID = client->GetUserID(rsa, recv);
             if(recvID > -1){
-                database->sendMail(rsa, recvID, std::wstring(captionEdit->GetValue().c_str()), std::wstring(mailEdit->GetValue().c_str()), database->userKey(rsa, recv), attachmentList);
+                client->SendMessage(rsa, recvID, std::wstring(captionEdit->GetValue().c_str()), std::wstring(mailEdit->GetValue().c_str()));
                 serverPopup->Close();
                 wxMessageBox(L"Die Nachricht wurde versandt!", "Nachricht schreiben", wxOK, this);
                 this->Close();
@@ -83,6 +84,10 @@ void MailWriterFrame::OnSend(wxCommandEvent& event) {
         if (toEdit->GetValue() == ""){
             wxMessageBox(L"Bitte gib einen Empfänger ein!", "Fehler", wxOK, this);
         }
+    }
+    }else{
+        wxMessageBox(L"Verbindung zum Server fehlgeschlagen!", "Fehler", wxOK, this);
+        client->loggedIn = false;
     }
 }
 
