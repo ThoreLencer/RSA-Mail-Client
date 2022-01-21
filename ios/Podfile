@@ -1,3 +1,0 @@
-target 'Runner' do
-  use_frameworks!
-end
