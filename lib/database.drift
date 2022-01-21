@@ -1,0 +1,35 @@
+CREATE TABLE Messages (
+ID INTEGER PRIMARY KEY AUTOINCREMENT,
+MessageID INTEGER NOT NULL,
+UserID INTEGER NOT NULL,
+Sender INTEGER NOT NULL,
+Receiver INTEGER NOT NULL,
+Message longtext NOT NULL,
+Read TINYINTEGER NOT NULL DEFAULT 0,
+Date text NOT NULL,
+ReceiveDate text NOT NULL DEFAULT '0000-00-00 00:00:00');
+
+CREATE TABLE Contacts (
+ID INTEGER PRIMARY KEY AUTOINCREMENT,
+UserID INTEGER NOT NULL,
+ContactID INTEGER NOT NULL,
+Name TEXT NOT NULL);
+
+-- queries:
+GetLastMessageWithUser: SELECT MessageID, Sender, Receiver, Read, Date, ReceiveDate, Message FROM Messages WHERE (UserID=?)and ((Receiver=? and Sender=?) or (Receiver=? and Sender=?)) ORDER BY MessageID DESC LIMIT 1;
+
+GetMessagesWithUser: SELECT MessageID, Sender, Receiver, Read, Date, ReceiveDate, Message FROM Messages WHERE (UserID=?)and ((Receiver=? and Sender=?) or (Receiver=? and Sender=?));
+
+GetMessageIDs: SELECT MessageID FROM Messages WHERE (UserID=?) and (Receiver=? or Sender=?);
+
+GetContactNames: SELECT Name FROM Contacts WHERE UserID=?;
+
+GetContactIDs: SELECT ContactID FROM Contacts WHERE UserID=?;
+
+GetMessage: SELECT MessageID, Sender, Receiver, Read, Date, ReceiveDate, Message FROM Messages WHERE UserID=? and MessageID=?;
+
+GetRead: SELECT Read FROM Messages WHERE UserID=? and MessageID=?;
+
+ContainsMessage: SELECT ID FROM Messages WHERE UserID=? and MessageID=?;
+
+ContainsContact: SELECT ID FROM Contacts WHERE UserID=? and ContactID=?;
